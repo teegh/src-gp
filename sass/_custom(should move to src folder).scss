@@ -1,0 +1,877 @@
+@import "../../src/_bower/compass-mixin/lib/_compass.scss";
+
+
+// i.spriteTest-a{
+//   @include sprite($sprite-spriteTest-a);
+//   display: block;
+// }
+
+
+// .sample4{
+//   background-image: url("asset://top.jpg");
+//   height: 900px;
+// }
+
+
+//-------------------------------
+//color property
+//-------------------------------
+$baseColor:#EEEEEE;
+$baseColor2:#FFFFFF;
+$subColor:#000000;
+$accentColor:#000000;
+
+$h3-color:#666666;
+$link:#AD8D2D;
+$link-hover:#755F1F;
+$thumbnailSplitBorder:#CCC;
+
+// $subColor-under:#888888;
+$subColor-under:#EEC13E;
+
+$baseColor2-highlight:#EEC13E;
+$navbar-toggleButtonBackGroundColor:#171F28;
+$navbar-toggleButtonBackGroundColor-active:#11181E;
+
+$default-font-size: 11px;
+
+// $baseColor:#0D1217;
+// $baseColor2:#080A0B;
+// $subColor:#829DB5;
+// $accentColor:#DBEAFD;
+
+// $subColor-under:#37464D;
+// $baseColor2-highlight:#14191C;
+// $navbar-toggleButtonBackGroundColor:#171F28;
+// $navbar-toggleButtonBackGroundColor-active:#11181E;
+//-------------------------------
+
+
+
+
+//-------------------------------
+// mixin
+//-------------------------------
+//テキストシャドー (灯りエフェクト)
+@mixin addGlowLightShadow($opa:0.8, $bulr:8px, $bulrColor:$accentColor, $baseLineColor:#000000 ){
+  @include text-shadow(
+      rgba($baseLineColor, 1.0) 0px 0px 2px,
+      rgba($bulrColor, $opa) 0px 0px $bulr);
+}
+
+// グラデーション
+// http://cappee.net/coding/sass-scss/mixin-matome#i-4
+@mixin gradient-top-lighten($color:$hoge, $lighten:10){
+  background-color: $color;
+  @include background-image(linear-gradient(lighten($color, $lighten) 0%,lighten($color, $lighten*0.2) 40%,$color 41%,$color 75%,lighten($color, $lighten) 100%));
+}
+//グラデーション　（フラットデザイン）
+@mixin gradient-flat-darken($color:$hoge, $darken:10){
+  background-color: $color;
+  @include background-image(linear-gradient(top, darken($color, $darken*0.0) 0%,darken($color, $darken*0.0) 49%,darken($color, $darken) 50%,darken($color, $darken*0.8) 100%));
+}
+
+//-------------------------------
+// flat-theme 初期スタイル設定とfix
+//-------------------------------
+
+// @import url(http://fonts.googleapis.com/css?family=Alegreya+Sans+SC:400,100);
+// @import url(http://fonts.googleapis.com/css?family=Questrial);
+// @import url(http://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900,900italic);
+
+body{
+  background-color: $baseColor;
+  // background-image: url("../img/wpaper.png");
+  color: $subColor;
+  font-family: "ＭＳ Ｐゴシック",Osaka,"ヒラギノ角ゴ Pro W3";
+  size: 14px;
+}
+
+h1, h2, h3, h4, h5, h6{
+  // font-family: 'Questrial', sans-serif;
+  font-weight: 300;
+  letter-spacing: 2px;
+}
+
+h1, h2, .h1, .h2{
+  margin: 0 0 0.6em 0;
+  padding: 0 0;
+  // font-weight: bold;
+}
+h3, .h3{
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+#header{
+  // font-family: 'Questrial', sans-serif;
+  font-weight: 500;
+  letter-spacing: 2px;
+}
+
+a {
+  color: $subColor;
+}
+
+a:hover {
+  color: $subColor-under;
+}
+
+/* fix  (flat-theme header navbar) */
+#header a.navbar-brand{
+  -moz-box-sizing: content-box;
+  -webkit-box-sizing: content-box;
+  -o-box-sizing: content-box;
+  -ms-box-sizing: content-box;
+}
+
+
+body > section, #boxed > section {
+    padding: 60px 0;
+}
+
+
+//-------------------------------
+// tumblr controlsの削除
+//-------------------------------
+
+//none display tumblr controls
+iframe#tumblr_controls {
+  display:none;
+}
+
+
+//-------------------------------
+// TB3の化ルーセルでfonr-awesomeのスクロールボタンを調整
+//-------------------------------
+
+/*carousel for font-awesome*/
+.carousel-control .fa{
+  display: inline-block;
+  position: absolute;
+  top: 50%;
+  z-index: 5;
+}
+
+
+//-------------------------------
+// Google mapの調整とfix
+//-------------------------------
+
+// // google map
+// #map_canvas{
+//   width:100%;
+//   height:500px;
+//   @include border-radius(8px, 8px);
+// }
+// // google map fix (conflict bootstrap css)
+// #map_canvas .gm-style img {
+//   max-width: inherit;
+// }
+
+
+
+
+
+//-------------------------------
+// share btn
+//-------------------------------
+.right-align{
+  text-align: right;
+}
+
+.fa-1-3x{
+  // font-size: 1.3em;
+}
+
+.shareBtnArea{
+  display: inline-block;
+  margin-left:0.5em;
+}
+
+@mixin addShareBtnStyle($R, $G, $B, $Rh, $Gh, $Bh){
+
+  font-size: 1.0em;
+  padding:0.3em 0.3em;
+  @include border-radius(20%);
+
+  border: 2px solid $baseColor;
+  background-color: rgba($R, $G, $B, 1.0);
+  color: $baseColor;
+
+  &:hover{
+    border: 2px solid $baseColor;
+    background-color: rgba($Rh, $Gh, $Bh, 1.0);
+    color: $baseColor;
+  }
+}
+
+a.shareBtn-facebook{
+  @include addShareBtnStyle(30, 50, 97, 14, 24, 46);
+}
+a.shareBtn-twitter{
+  @include addShareBtnStyle(0, 172, 237, 0, 137, 186);
+}
+a.shareBtn-google{
+  @include addShareBtnStyle(219, 74, 57, 168, 56, 44);
+}
+a.shareBtn-tumblr{
+  @include addShareBtnStyle(52, 82, 111, 29, 46, 61);
+}
+a.shareBtn-mixi{
+  @include addShareBtnStyle(209, 173, 90, 158, 131, 68);
+}
+
+//-------------------------------
+// メニュー
+//-------------------------------
+
+//header menu color
+#header {
+  background-color: $baseColor2;
+}
+
+.navbar-shadow {
+  // background-color: ;
+  @include box-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+  padding: 0;
+  position: relative;
+  z-index: 10000;
+}
+
+//navbar
+//navbar menu background color
+//desktop マウスホバーとスクロールスパイの選択状態
+.navbar .navbar-main > li:focus > a, .navbar .navbar-main > li:active > a, .navbar .navbar-main > li:hover > a, .navbar .navbar-main > li.active > a, .navbar .navbar-main > li.active:hover > a, .navbar .navbar-main > li.open > a, .navbar .navbar-main > li.open:hover > a {
+    background-color: $baseColor2;
+    color:$baseColor2-highlight;
+    // @include box-shadow(1px 1px 2px $subColor-under inset,0px 0px 1px $subColor inset);
+    // @include border-radius(8px, 8px);
+}
+//desktop クリックしてリリースした後の状態、またmobileのクリックした状態
+.navbar-inverse .navbar-nav > .active > a, .navbar-inverse .navbar-nav > .active > a:hover, .navbar-inverse .navbar-nav > .active > a:focus {
+    background-color: $baseColor2;
+    color:$baseColor2-highlight;
+    // @include border-radius(8px, 8px);
+    // @include box-shadow(1px 1px 2px $subColor-under inset,0px 0px 1px $subColor inset);
+
+}
+.navbar-inverse .navbar-nav > .active > a, .navbar-inverse .navbar-nav > .active > a:hover, .navbar-inverse .navbar-nav > .active > a:focus {
+    background-color: $baseColor2;
+    color:$baseColor2-highlight;
+    // @include border-radius(8px, 8px);
+}
+
+//navbar menu background color
+.navbar-inverse .navbar-nav > li a {
+    color: $accentColor;
+    // @include addGlowLightShadow(1.0,8px);
+}
+
+.navbar-inverse .navbar-nav > li a:hover,
+.navbar-inverse .navbar-nav > li a:focus{
+  color:$baseColor2-highlight;
+}
+
+
+//------------------------
+//ナビバー トグル　スマートフォンメニュー
+//------------------------
+//navbar toggle
+.navbar-inverse .navbar-toggle {
+    background-color:$baseColor2;
+    color:$subColor;
+    // border-color: $baseColor;
+    // background-color: $navbar-toggleButtonBackGroundColor;
+}
+.navbar-inverse .navbar-toggle:hover,
+.navbar-inverse .navbar-toggle:focus{
+    border-color: $baseColor2;
+    background-color: $subColor;
+    color: $baseColor2;
+}
+
+//navbar toggle icon bar
+.navbar-inverse .navbar-toggle .icon-bar {
+    background-color: $subColor;
+    // @include text-shadow(rgba(#000000, 1.0) 0px 0px 2px);
+}
+
+.toggleIcon{
+  padding:0.2em;
+}
+
+
+.navbar-inverse .navbar-toggle .icon-bar:hover,
+.navbar-inverse .navbar-toggle .icon-bar:focus {
+    // background-color: $accentColor;
+    background-color: red;
+    // @include text-shadow(rgba(#000000, 1.0) 0px 0px 2px);
+}
+
+a#closeCollapseMenu{
+  text-align: right;
+  // @include addGlowLightShadow(1.0,0px);
+}
+
+.mobileMenuSpl{
+  border-top: 1px solid $subColor;
+}
+
+
+
+//-------------------------------
+// セクション (背景やカラーなど)
+//-------------------------------
+
+@mixin pSetting(){
+  font-size:$default-font-size;
+  line-height: 20px;
+}
+
+// div background
+.grayBlue{
+  //background-color: $baseColor2;
+  h1,h2,h3,h4,h5,h6{
+    color: $accentColor;
+  }
+  h2{
+    // @include addGlowLightShadow();
+  }
+  p{
+    color: $subColor;
+    @include pSetting();
+  }
+  p a{
+    color:$link;
+    border-bottom:1px dotted rgba($link, 0.0);
+    padding-left: 0.2em;
+
+    &:hover{
+      color:$link-hover;
+      border-bottom:1px dotted rgba($link-hover, 1.0);
+    }
+    &:after{
+      content:"\f08e";
+      padding: 0 0.2em 0 0.4em;
+      display: inline-block;
+      font-family: FontAwesome;
+      font-style: normal;
+      font-weight: normal;
+      line-height: 1;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+  }
+}
+ .darkBlue{
+  //background-color: $baseColor2;
+  h1,h2,h3,h4,h5,h6{
+    color: $accentColor;
+  }
+  h2{
+    // @include addGlowLightShadow();
+  }
+  p, li{
+    color: $subColor;
+    @include pSetting();
+  }
+}
+
+
+
+//-------------------------------
+// テーブル
+//-------------------------------
+
+//table
+.table > thead > tr > th, .table > thead > tr > td, .table > tbody > tr > th, .table > tbody > tr > td, .table > tfoot > tr > th, .table > tfoot > tr > td{
+    border-top: none;
+    border-bottom: 1px solid $subColor;
+    color : $subColor;
+    font-size: $default-font-size;
+    font-weight: normal;
+}
+
+/*original layout*/
+.sectionBlock{
+  margin-top: 0px;
+}
+.h2area{
+  padding-bottom: 2.0em;
+}
+.h2p{
+  // padding-left:10px;
+}
+.address-table th{
+  white-space:nowrap;
+}
+.img-round{
+  // border-radius: 10%;
+  @include border-top-left-radius(3%);
+  @include border-top-right-radius(3%);
+  @include border-bottom-left-radius(3%);
+  @include border-bottom-right-radius(3%);
+}
+.img-thumbnail{
+  @include box-shadow(3px 5px 8px rgba(0, 0, 0, 0.2));
+}
+.img-artist{
+    height: 70%;
+    margin: 0 15%;
+    width: 70%;
+}
+
+
+//-------------------------------
+// フッター
+//-------------------------------
+//
+#footer {
+  color: $subColor;
+}
+#footer a {
+  color: $subColor;
+}
+#footer a:hover {
+  color: $subColor-under;
+}
+
+//-------------------------------
+// ツールチップ
+//-------------------------------
+.tooltip{
+  font-size: $default-font-size;
+}
+
+
+
+
+//-------------------------------
+// header
+//-------------------------------
+
+header{
+  // background-image: url("asset://back/back.gif");
+  background-color: #FFF;
+}
+
+.header-wrapper{
+  padding: 0 8px 8px 8px;
+}
+
+
+.headerparts{
+  float:left;
+  margin: 8px 8px 0 0;
+}
+
+.headerparts-right{
+  float:right;
+  margin: 8px 0 0 8px;
+}
+
+.dirPathMes{
+  padding: 2px 0 0 10px;
+  margin:0;
+  font-size: 10px;
+  color:#BBB;
+  letter-spacing: 0.1em;
+}
+
+//-------------------------------
+// header from
+//-------------------------------
+
+header .navbar-form{
+  padding:0px;
+  margin:0px;
+}
+
+header .navbar-form {
+  .form-group{
+    width:250px;
+  }
+
+  .form-group .form-control {
+    width:250px;
+  }
+  .searchFrom{
+    width:340px;
+  }
+}
+
+//-------------------------------
+//  検索結果
+//-------------------------------
+.orgLayout{
+  // margin:0 5px 5px 5px;
+  margin: 0;
+}
+
+.searchResultCol{
+  padding: 0;
+  font-size: 0.85em;
+  // letter-spacing: 0.05em;
+  letter-spacing: 0em;
+
+  a{
+    display: block;
+    padding: 3px 5px 3px 5px;
+    border: 1px solid #fff;
+    border-bottom: 1px solid #ddd;
+    @include border-radius(4px,4px);
+
+    -webkit-transition: all 0.1s ease;
+    -moz-transition: all 0.1s ease;
+    -ms-transition: all 0.1s ease;
+    -o-transition: all 0.1s ease;
+    transition: all 0.1s ease;
+
+    &:link{
+      color:#333;
+    }
+    &:hover{
+      color:#000;
+      // background-color: #eee;
+      border-top: 1px solid #fff;
+      border: 1px solid #ccc;
+
+      // @include gradient-top-lighten(#dde,5);
+      @include gradient-flat-darken(#E6EEEF,5);
+    }
+    &:active{
+      color:#000;
+      // background-color: #eee;
+      border-top: 1px solid #fff;
+      border: 1px solid #ccc;
+
+      @include gradient-flat-darken(#D4E0E2,3);
+    }
+  }
+  //選択状態
+  a.selectedItem{
+    display: block;
+    // padding: 4px 5px 4px 5px;
+    border: 1px solid #fff;
+    border-bottom: 1px solid #ddd;
+    @include border-radius(4px,4px);
+
+    -webkit-transition: all 0.1s ease;
+    -moz-transition: all 0.1s ease;
+    -ms-transition: all 0.1s ease;
+    -o-transition: all 0.1s ease;
+    transition: all 0.1s ease;
+    color:#000;
+      // background-color: #eee;
+    border-top: 1px solid #fff;
+    border: 1px solid #ccc;
+
+    @include gradient-flat-darken(#D4E0E2,3);
+  }
+}
+
+// .contentsWapper{
+body{
+  // background-color: #d8d8d8;
+  // background-image: url("asset://back/back.gif");
+  background-color: F0F0F0;
+}
+
+.searchKeyMark{
+  padding-left: 0;
+  padding-right: 0;
+}
+.searchKeyMark0{
+  background-color: #F6CE57;
+}
+.searchKeyMark1{
+  background-color: #ECA3B7;
+}
+.searchKeyMark2{
+  background-color: #90E0C8;
+}
+.searchKeyMark3{
+  background-color: #C3E091;
+}
+.searchKeyMark4{
+  background-color: #E0B192;
+}
+.searchKeyMark5{
+  background-color: #858BB2;
+}
+
+
+
+.resultStatusMes{
+  font-size: 0.9em;
+  line-height: 1.6em;
+}
+// .resultStatusMes i{
+//   font-size: 0.9em;
+//   line-height: 1.6em;
+// }
+
+.searchResultCol{
+  .fileIcon{
+    display: block;
+    float: left;
+    padding: 0;
+
+    i{
+      width: 20px;
+      height: 20px;
+      margin: 0;
+      line-height: 20px;
+      text-align: center;
+      color: #FFF;
+      @include border-radius(10%);
+    }
+    .fa-file-pdf-o{
+      @include gradient-flat-darken(#c0392b,10);
+    }
+    .fa-file-image-o{
+      @include gradient-flat-darken(#60C4B0,10);
+    }
+    .fa-file-text-o{
+      @include gradient-flat-darken(#7C858E,10);
+    }
+    .fa-file-word-o{
+      @include gradient-flat-darken(#3498db,10);
+    }
+    .fa-file-audio-o{
+      @include gradient-flat-darken(#16A6B6,10);
+    }
+    .fa-file-o{
+      @include gradient-flat-darken(#BFBFBF,10);
+    }
+
+  }
+  .fileName{
+    padding: 2px 2px 2px 0.6em;
+    display: block;
+    overflow: auto;
+  }
+}
+
+.searching{
+  padding: 20px 10px 20px 10px;
+  font-size: 2.0em;
+  color: #ccc;
+  text-align: center;
+
+  @include text-shadow(
+        rgba(#FFF, 1.0) 1px 1px 0px,
+        rgba(#bbb, 1.0) -1px -1px 0px
+  );
+}
+
+//-------------------------------
+// ファイル読み込みステータス
+//-------------------------------
+.readStatusMes{
+  font-size: 0.8em;
+  color: #4BA1BB;
+
+  .strong{
+    font-weight: bold;
+  }
+}
+
+
+
+//-------------------------------
+// 選択ファイル
+//-------------------------------
+.selectFileStatus{
+  position: relative;
+  left: 0px;
+  bottom: 0px;
+  .selectFileStatusMes{
+    font-size: 0.8em;
+    color: #FFF;
+    background-color: #5CB85C;
+    padding:5px;
+    @include border-radius(5px);
+  }
+}
+
+.selectFileWrapper {
+  position: fixed;
+  // position: relative;
+}
+
+// .selectFileWrapper {
+//   position: fixed;
+//   bottom: 0px;
+//   left: 0px;
+// }
+
+
+// .footerFixed{
+//     position:fixed;
+//     bottom:0px;
+//     left:0px;
+//     width:100%;
+//     height:auto;
+//     padding:4pt;
+//     background-color:#ccc;
+// }
+
+
+//固定エリアの再描画
+// .do-fixed #footerFixed{
+//   width: 80%;
+//   height:1px;
+//   position: relative;
+// }
+// .footerFixed{
+//   // background-image: url("asset://back/back.gif");
+//   background-color: #FFF;
+//   @include box-shadow(0 -4px 6px rgba(0, 0, 0, 0.1));
+
+//     position:fixed;
+//     bottom:0px;
+//     left:0px;
+//     height:auto;
+//     width: 100%;
+// }
+
+
+
+
+//-------------------------------
+// 設定メニュー
+//-------------------------------
+#settingOptionForm{
+   h3{
+    font-weight: normal;
+    font-size: 1.2em;
+  }
+  .settingDetails{
+    font-size: 0.8em;
+    padding: 0.8em 0 2.0em 2.0em;
+  }
+
+  .settingHeader{
+    border-bottom: 1px #ddd solid;
+    h2{
+      font-size: 1.3em;
+    }
+    p{
+      font-size: 0.8em;
+      padding-left: 1.0em;
+    }
+  }
+}
+
+
+//-------------------------------
+// 検索欄削除ボタン
+//-------------------------------
+a#inputRemove{
+  &:hover{
+      color:#A94442;
+      background-color: #EEE4E4;
+    }
+}
+
+
+.fileListTooltip {
+    width: 400px;
+    position: absolute;
+    z-index: 99999;    //最前面
+    left: -9999px;
+    background: #444;
+    border: 1px solid #FFF;
+    @include box-shadow(2px 2px 10px rgba(0, 0, 0, 0.3));
+    @include border-radius(5px, 5px);
+
+    .fileListTooltip-wrapper{
+      padding:5px;
+
+      h4{
+        color: #FFF;
+        font-size: 0.9em;
+        margin: 10px 10px 5px 10px;
+        border-bottom: 1px solid #FFF;
+        padding: 5px;
+        display: inline-block;
+      }
+      p{
+        font-size: 0.9em;
+        color: #ccc;
+        margin: 0px 10px 5px 20px;
+      }
+    }
+}
+//-------------------------------
+// Media Query の追加設定と上書き
+//-------------------------------
+
+/*media query overwrite*/
+@media screen and (max-width: 1200px){
+  #main-slider .carousel .item{
+    height: 600px;
+  }
+  #map_canvas{
+    height:500px;
+  }
+}
+@media screen and (max-width: 992px){
+  #main-slider .carousel .item{
+    height: 450px;
+  }
+  #map_canvas{
+    height:400px;
+  }
+  body > section, #boxed > section {
+    padding: 60px 0;
+  }
+}
+@media screen and (max-width: 768px){
+  #main-slider .carousel .item{
+    height: 300px;
+  }
+  #map_canvas{
+    height:300px;
+  }
+  body > section, #boxed > section {
+    padding: 30px 0;
+  }
+  .mediaServicesSplit{
+    padding: 10px 0 15px 0;
+    border-bottom: 1px dotted $thumbnailSplitBorder;
+  }
+}
+
+@media screen and (max-width: 600px){
+  header .navbar-form .form-group{
+    width:100%;
+  }
+
+  header .navbar-form .form-group .form-control{
+    width:100%;
+  }
+
+  header .navbar-form .searchFrom{
+    width:100%;
+  }
+
+  .headerparts{
+    float:none;
+    margin: 8px 0 0 0;
+  }
+
+  .headerparts-right{
+    float:none;
+    margin: 8px 0 0 0;
+  }
+
+  .hidden-menu{
+    display: none !important;
+  }
+}
+
+
+
