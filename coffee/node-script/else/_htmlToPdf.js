@@ -5,7 +5,7 @@ var _HTMLtoPDF = (function(){
   var nPath = require('path');
   var html  = "";
 
-  function makePDF_cmd(inFilePath , inBodyHTML, inStyle, inLinkStr, inOption){
+  function makePDF_cmd(inFilePath , inBodyHTML, inStyle, inLinkStr, inOption , inCallBackFunction){
 
         // var printCSSPathArr = getPrintCssPath("print.css");
         // var cssStr = "";
@@ -23,14 +23,14 @@ var _HTMLtoPDF = (function(){
 
         var options = inOption;
         pdf.create(html,options).toFile(inFilePath,function(err, res){
-          // if (err)alert("html-pdf error!");
-          // if (!err)alert("maked pdf");
+          if (err)inCallBackFunction('error',err, res);
+          if (!err)inCallBackFunction('success',err, res);
         });
   }
 
 
   return {
-    makePDF : function(inFilePath , inBodyHTML, inStyle, inLinkStr, inOption) {
+    makePDF : function(inFilePath , inBodyHTML, inStyle, inLinkStr, inOption, inCallBackFunction) {
       //(exaple)
       // inFilePath : c:/...
       // inBodyHTML : <div class="pWrapper">pdfArea</div>
@@ -38,7 +38,7 @@ var _HTMLtoPDF = (function(){
       // inOption : { "width": '2100px', "height":"2970px" }
       //C:/Users/usen V-2/Desktop/録音/fooa.pdf
       //{ "width": '2100px', "height":"2970px" }
-      makePDF_cmd(inFilePath , inBodyHTML, inStyle, inLinkStr, inOption);
+      makePDF_cmd(inFilePath , inBodyHTML, inStyle, inLinkStr, inOption, inCallBackFunction);
     }
   };
 
