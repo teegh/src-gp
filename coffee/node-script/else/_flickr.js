@@ -44,7 +44,6 @@ var _FL = (function(){
   function getThumbCall(inMinDate, inCallFunc, inPer_page, inPage){
 
     Flickr.authenticate(flickrOptions, function(error, flickr) {
-
       //[get photo]
       //unix timstamp -> http://url-c.com/tc/
       var apiOptions = {
