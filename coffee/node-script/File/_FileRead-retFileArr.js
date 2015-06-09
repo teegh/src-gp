@@ -1,6 +1,16 @@
 //---------------------------
 // ファイルを非同期で読み取り,ファイルパスを含む配列で返す。
 //---------------------------
+// 使い方
+// var callback_onFileReadFn = function (inFileArr){
+//     alert("read file length: " + inFileArr.length);
+//     //alert("read file path [0]: " + inFileArr[0]);
+// };
+// _FileRead.read(files,
+//     "mp3,MP3",
+//     callback_onFileReadFn
+// );
+
 var _FileRead = (function(){
 
     var fs              = require("fs");
@@ -14,7 +24,6 @@ var _FileRead = (function(){
     //---------------------------
     var callback_Function;
     var q;
-
 
     //ファイルがディレクトリであるか？
     //yes : ディレクトリの中身をqueタスクに追加
@@ -46,7 +55,6 @@ var _FileRead = (function(){
 
 
         }else{
-
             readFile(fileObj.file, callback);
         }
     }
@@ -109,25 +117,30 @@ var _FileRead = (function(){
     function getExtName(inFile){
         return path.extname(inFile);
     }
+    //初期化
+    function initVar_call(){
+        readExtName         = [];               //読み込みたいファイルの拡張子
+        retFileArr          = [];
+        callback_Function   = null;
+        q                   = null;
+
+        //queの初期化
+        initQueue();
+    }
 
 
 
     return {
         //変数の初期化とメモリ開放
         initVar:  function (){
-            readExtName         = [];               //読み込みたいファイルの拡張子
-            retFileArr          = [];
-            callback_Function   = null;
-            q                   = null;
-
-            //queの初期化
-            initQueue();
+            initVar_call();
         },
 
         //ファイルの読み込み実行
         //
         //readExtNameの例 (すべての拡張子を読み込む：readExtName="" , JPEGのみ:readExtName="jpg,JPG" )
         read: function (inFileList, readExtName ,inCallback_Func) {
+            initVar_call(); //初期化
             callback_Function = inCallback_Func;
             saveReadExtName(readExtName);
 
