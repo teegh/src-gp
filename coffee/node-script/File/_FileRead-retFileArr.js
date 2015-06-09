@@ -1,5 +1,5 @@
 //---------------------------
-// ファイルを非同期で読み取り,ファイルパスなどを含む配列を返す。
+// ファイルを非同期で読み取り,ファイルパスを含む配列で返す。
 //---------------------------
 var _FileRead = (function(){
 
@@ -12,108 +12,60 @@ var _FileRead = (function(){
     //---------------------------
     // ファイルの再帰的な読み込み
     //---------------------------
-    var readFileCnt;
-    var waitFileCnt;
-    var filePath_temp;
-    var fileMTitme;
-    var fileName;
-    var logmes;
     var callback_Function;
-    var readStatusClearTimer;
+    var q;
 
 
-    //ファイルを開く
-    function fileListWalk(fileObj,callback) {
+    //ファイルがディレクトリであるか？
+    //yes : ディレクトリの中身をqueタスクに追加
+    //no : 読み込み処理関数を呼ぶ。
+    //
+    //callbackはasync(que)のタスクが実行完了した事を伝えるコールバック
+    function checkFileIsDirectory(fileObj,callback) {
 
-        waitFileCnt--;
-
-        //展開元のディレクトリが空だった場合、何も処理せずタスクを終える。
         if(fileObj.file == "noneFile"){
-            //待機しているQueが0だった場合、トランザクションや監視リストのKVS保存などを実行。
-            if(waitFileCnt == 0){
-                // _DirUpdateWatch.setKVS_DirList();
-                // _WebSQL_ctr.transaction_start(callback);
-            //コールバックを呼び出して処理を終える。
-            }else{
-                callback();
-            }
+            // alert("noneFileです");
+            callback();
             return;
         }
 
-         //ディレクトリの処理。ディレクトリ以下のファイルを展開して再帰処理
-        if (fs.statSync(fileObj.dir + "/" + fileObj.file).isDirectory()) {
-            dirW(fileObj.dir + "/" + fileObj.file, callback_Function, callback);
-        //ファイルの処理
-        } else {
+        if (fs.statSync(fileObj.file).isDirectory()) {
 
-            //ファイルの読み取り。ファイル名とパスをトランザクション・バッファに追加。
-            readFileCnt++;
+            //ディレクトリの中身を展開し asyncのタスクに追加する。
+            fs.readdir(fileObj.file, function(err, files) {
+                for (var i = 0; i < files.length; i++) {
+                    q.push({"file":path.join(fileObj.file,files[i]) }, function(){} );
+                }
+                //ディレクトリ以下が空だった場合、処理しないがqにタスクだけ入れる(q.drainでイベントを受けとるために必要)
+                if(files.length==0){
+                    q.push({"file":"noneFile"}, function(){} );
+                }
 
-            //ファイルの読み込み。拡張子により、読み込みを許可するか否か決める
-            if(isReadPermission(fileObj.file)){
-                filePath_temp = path.join(fileObj.dir, fileObj.file);
-                fileMTitme = fs.statSync(filePath_temp).mtime.getTime();
-                filename = path.basename(filePath_temp);
-                retFileArr.push({"fileName":filename, "filePath":filePath_temp, "fileMTitme":fileMTitme});
-            }
+                callback();     //asyncにqueの実行完了を伝える
+            });
 
-            callback();
+
+        }else{
+
+            readFile(fileObj.file, callback);
         }
     }
 
-    //入力されるデータ
-    // ・ファイルドロップ 配列 fileオブジェクトの配列files (isDirectory() == true)
-    // このクロージャーの設計：fileオブジェクト
-
-
-    //ディレクトリのを開く。それ以下にあるファイルを取得。
-    function dirW(dir,inCallback_Func, inQueCallBack){
-        callback_Function   = inCallback_Func;
-        var queCallBack     = inQueCallBack;
-
-        for(var j = 0; j < dir.length; j++){
-
-            //ディレクトリだった場合
-            if(fs.statSync(dir[j].path).isDirectory()){
-
-                alert("filepath -> " + dir[j].path);
-
-                fs.readdir(dir[j].path, function(err, files) {
-                    for (var i = 0; i < files.length; i++) {
-                        waitFileCnt++;
-                        //コールバックではjを取得できない。jはforループ後の値となる。forでfilelistを処理するのをやめた方がいい？
-                        // alert("debug:dir: " + dir.length  + ")" + j + " - " + dir[j]);
-                        q.push({"dir":dir[j].path, "file":files[i]}, function(err) {});
-                    }
-                    //ディレクトリ以下が空だった場合、処理しないがqにタスクだけ入れる(q.drainでイベントを受けとるために必要)
-                    if(files.length==0){
-                        waitFileCnt++;
-                        q.push({"dir":dir[j].path, "file":"noneFile"}, function(err) {});
-                    }
-                    queCallBack();
-                });
-
-
-            //ファイルだった場合
-            }else{
-
-                q.push({
-                    dir:dir[j].path.replace(path.basename(dir[j].path),""),
-                    file: path.basename(dir[j].path)},
-                    function(err) {});
-                }
-        }
+    //ファイルの読み込み処理
+    function readFile(inFilePath, inCallback){
+        // alert(inFilePath);
+        retFileArr.push(inFilePath);
+        inCallback();     //asyncにqueの実行完了を伝える
     }
 
 
     //---------------------------
     // ASYNC 非同期キュー　逐次処理
     //---------------------------
-    var q;
     function initQueue(){
         q = null;
         q = async.queue(function(fileObj, callback) {
-            fileListWalk(fileObj, callback);
+            checkFileIsDirectory(fileObj,callback);
         }, 1);
 
         //処理が完了したとき
@@ -123,11 +75,10 @@ var _FileRead = (function(){
     }
 
     function qDrain(){
-        //　すべて処理が完了した時
-        // if(_WebSQL_ctr.getTransactionCnt() == readFileCnt){
-            _FileRead.readComplete();
-            _FileRead.initVar();
-        // }
+        //　すべてqueタスクが完了した時
+        // alert("queの終了。初期化とコールバック実行。");
+        _FileRead.readComplete();
+        _FileRead.initVar();
     }
 
 
@@ -164,23 +115,26 @@ var _FileRead = (function(){
     return {
         //変数の初期化とメモリ開放
         initVar:  function (){
-
-            readFileCnt         = 0;
-            waitFileCnt         = 0;
-            filePath_temp       = null;
-            filePath_temp       = "";
-            logmes              = null;
-            logmes              = "";
+            readExtName         = [];               //読み込みたいファイルの拡張子
             retFileArr          = [];
+            callback_Function   = null;
+            q                   = null;
 
+            //queの初期化
             initQueue();
         },
 
         //ファイルの読み込み実行
+        //
         //readExtNameの例 (すべての拡張子を読み込む：readExtName="" , JPEGのみ:readExtName="jpg,JPG" )
-        dirWalk: function (dir, readExtName ,inCallback_Func, inQueCallBack) {
+        read: function (inFileList, readExtName ,inCallback_Func) {
+            callback_Function = inCallback_Func;
             saveReadExtName(readExtName);
-            dirW(dir, inCallback_Func, inQueCallBack);
+
+            //ファイルリストを展開して、queタスクに追加する。
+            for(var i=0; i<inFileList.length; i++){
+                q.push({"file":inFileList[i].path}, function() {});
+            }
         },
 
         //読み込み完了時に呼び出す処理(q.drainから実行)
@@ -188,6 +142,7 @@ var _FileRead = (function(){
             callback_Function(retFileArr);
         },
 
+        //ファイルの拡張子を得る
         getFileExtName: function(inFile){
             return getExtName(inFile);
         }
