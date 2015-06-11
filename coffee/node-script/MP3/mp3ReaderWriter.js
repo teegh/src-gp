@@ -1,15 +1,17 @@
 //ID3v2 2.3のタグ読み込みと書き込み
 //他のバージョンも最低限読み込めるようにする。
 
-var _ID3Reader = new (function(){
+var _ID3Reader = (function(){
 
   var fs        = require('fs');
   var Buffer    = require('buffer').Buffer;
-  var Iconv     = require('iconv').Iconv; //npm
   var jschardet = require('jschardet');   //npm
+  var Iconv     = require('iconv').Iconv; //npm
+  // var iconv = require('iconv-lite');
 
-  // Credits to esailja //
-  var self = this;
+
+  // // // Credits to esailja //
+  // // var self = this;
 
   var PIC_TYPE = ["Other","32x32 pixels 'file icon' (PNG only)","Other file icon","Cover (front)","Cover (back)","Leaflet page","Media (e.g. lable side of CD)","Lead artist/lead performer/soloist","Artist/performer","Conductor","Movie/video screen capture","A bright coloured fish","Illustration","Band/artist logotype","Publisher/Studio logotype","Band/Orchestra","Composer","Lyricist/text writer","Recording Location","During recording","During performance"];
   var GENRES = ["Blues","Classic Rock","Country","Dance","Disco","Funk","Grunge","Hip-Hop","Jazz","Metal","New Age","Oldies","Other","Pop","R&B","Rap","Reggae","Rock","Techno","Industrial","Alternative","Ska","Death Metal","Pranks","Soundtrack","Euro-Techno","Ambient","Trip-Hop","Vocal","Jazz+Funk","Fusion","Trance","Classical","Instrumental","Acid","House","Game","Sound Clip","Gospel","Noise","AlternRock","Bass","Soul","Punk","Space","Meditative","Instrumental Pop","Instrumental Rock","Ethnic","Gothic","Darkwave","Techno-Industrial","Electronic","Pop-Folk","Eurodance","Dream","Southern Rock","Comedy","Cult","Gangsta","Top 40","Christian Rap","Pop/Funk","Jungle","Native American","Cabaret","New Wave","Psychadelic","Rave","Showtunes","Trailer","Lo-Fi","Tribal","Acid Punk","Acid Jazz","Polka","Retro","Musical","Rock & Roll","Hard Rock","Folk","Folk-Rock","National Folk","Swing","Fast Fusion","Bebob","Latin","Revival","Celtic","Bluegrass","Avantgarde","Gothic Rock","Progressive Rock","Psychedelic Rock","Symphonic Rock","Slow Rock","Big Band","Chorus","Easy Listening","Acoustic","Humour","Speech","Chanson","Opera","Chamber Music","Sonata","Symphony","Booty Bass","Primus","Porn Groove","Satire","Slow Jam","Club","Tango","Samba","Folklore","Ballad","Power Ballad","Rhythmic Soul","Freestyle","Duet","Punk Rock","Drum Solo","A capella","Euro-House","Dance Hall"];
@@ -392,7 +394,7 @@ var _ID3Reader = new (function(){
 
   //各バッファーの結合後にファイルの書き出し
   function outputMP3(id3HeaderBuffer, id3FrameBuffer, id3ElseFrameBuffer, infilePath, inCallBackFn){
-    //バッファの結合
+    // バッファの結合
     // http://memo.overknee.info/post/15226149573
     var outbuff = new Buffer(id3HeaderBuffer.length + id3FrameBuffer.length + id3ElseFrameBuffer.length);
     id3HeaderBuffer.copy( outbuff );
@@ -417,7 +419,7 @@ var _ID3Reader = new (function(){
 
 
   //id3の読み込み
-  self.read = function (file,_callback){
+  var read = function (file,_callback){
     var callback = _callback;
 
     var id3 = {};
@@ -487,9 +489,9 @@ var _ID3Reader = new (function(){
 
 
 
-  //id3の書き込み
-  //self.readのコールバック関数で、タグの解析や書き込み処理を行う。
-  self.writeTag = function (inOpenFile, inOutFile, writeDataObj , inCompleteFn){
+  // //id3の書き込み
+  // //self.readのコールバック関数で、タグの解析や書き込み処理を行う。
+  var writeTag = function (inOpenFile, inOutFile, writeDataObj , inCompleteFn){
 
     var complete_callBackFn = inCompleteFn;
 
@@ -527,7 +529,7 @@ var _ID3Reader = new (function(){
           }
 
           var completeFn = function(){
-            console.log("1 + 2 +3 writeFile Success !!");
+            console.log("1 + 2 + 3 writeFile Success !!");
             complete_callBackFn(id3);
           }
 
@@ -547,10 +549,10 @@ var _ID3Reader = new (function(){
 
   return {
     read : function (inMp3FilePath, inCallBackFunc){
-      self.read(inMp3FilePath , inCallBackFunc);
+      read(inMp3FilePath , inCallBackFunc);
     },
     writeTag : function(inOpenFilePath, inWriteFilePath, inWriteData, inCallBackFunc){
-      self.writeTag(inOpenFilePath, inWriteFilePath, inWriteData, inCallBackFunc);
+      writeTag(inOpenFilePath, inWriteFilePath, inWriteData, inCallBackFunc);
     }
   };
 
@@ -561,7 +563,7 @@ var _ID3Reader = new (function(){
 
 
 // 使用例
-_ID3Reader.read( "./mp3/edit test/test.mp3" , function(id3){console.log(id3)} );
+// _ID3Reader.read( "./mp3/edit test/test.mp3" , function(id3){console.log(id3)} );
 
 // //デスクトップパス取得
 // var nodePath = require("path");

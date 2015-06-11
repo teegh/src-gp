@@ -38,6 +38,7 @@ var _FileRead = (function(){
             return;
         }
 
+
         if (fs.statSync(fileObj.file).isDirectory()) {
 
             //ディレクトリの中身を展開し asyncのタスクに追加する。

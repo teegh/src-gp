@@ -13,9 +13,9 @@
 //_SettingOption.js
 var _FileRead = (function(){
 
-    var fs = require("fs");
-    var path = require("path");
-    var async = require("async");
+    var fs          = require("fs");    //
+    var path        = require("path");  //
+    var async       = require("async"); //
     var readExtName = [];               //読み込みたいファイルの拡張子
 
     //---------------------------
@@ -28,7 +28,6 @@ var _FileRead = (function(){
     var logmes;
     var callback_Function;
     var readStatusClearTimer;
-
 
     function fileListWalk(fileObj,callback) {
 
