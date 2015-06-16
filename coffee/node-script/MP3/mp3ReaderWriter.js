@@ -1,13 +1,53 @@
 //ID3v2 2.3のタグ読み込みと書き込み
 //他のバージョンも最低限読み込めるようにする。
+//
+// 当面はid3v1とid3v2 2.2, 2.4のサポート。各規格から2.3に変換できるように。
+//
+//　はじめにid3v1
+//　 ・id3v1 1.0と1.1 読み込み
+//  ・id3v2 2.3に変換 (id3v1の領域はそのままに、id3 v2.3の領域を作成)
+//
+//id3の種類と構造
+//http://eleken.y-lab.org/report/other/mp3tags.shtml
+//id3v1 ファイル末尾の128byte ("TAG"から始まり、各タグが30byteで格納。順番は曲名、人名、アルバム名、年代の順。最後の5byteは 20 20 00 02 0Cで固定?)
 
-var _ID3Reader = (function(){
+
+// 使用例
+// _ID3Reader.read( "./mp3/test/test(utf16le).MP3" , function(id3){console.log(id3)} );
+
+// //デスクトップパス取得
+// var nodePath = require("path");
+// var dir_home = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
+// var outpath = nodePath.join(dir_home, "Desktop", "out.mp3");
+// nodePath = null;
+// dir_home = null;
+
+// _ID3Reader.writeTag("./mp3/edit test/test.mp3", outpath ,
+//     [
+//       //はcafé
+//       {"tag": "artist", "dat":"三門忠司çafe"},
+//       {"tag": "track", "dat":"1"},
+//       {"tag": "title", "dat":"title"},
+//       {"tag": "album", "dat":"album"},
+//       {"tag": "genre", "dat":"genre"},
+//       {"tag": "year", "dat":"0000/00/00"},
+//       {"tag": "comment", "dat":"コメント欄です","lang":"jpn"},
+//       {"tag": "lyric", "dat":"歌詞の欄です","lang":"jpn"}
+//       // {"tag": "jacketImage", "dat":"*****"}
+//     ],
+//     function (id3){console.log(id3);}
+// );
+
+
+// id3v2 reader and writer
+var _ID3Reader = (function(){  //jquery closure
+// var _ID3Reader = new function(){  //node app
 
   var fs        = require('fs');
   var Buffer    = require('buffer').Buffer;
   var jschardet = require('jschardet');   //npm
-  var Iconv     = require('iconv').Iconv; //npm
-  // var iconv = require('iconv-lite');
+  // var Iconv     = require('iconv').Iconv; //npm
+  var Iconv = require('iconv-lite');
 
 
   // // // Credits to esailja //
@@ -100,6 +140,8 @@ var _ID3Reader = (function(){
     return integer;
   }
 
+
+
   var special_tags = {
     'APIC':function(raw){
       var frame = {
@@ -172,8 +214,12 @@ var _ID3Reader = (function(){
             buf2 = new Buffer(TAG.SIZE-1);
             raw_tags.copy(buf2, 0, pos+10+1 , pos+10+TAG.SIZE);
 
-            iconv = new Iconv('SHIFT_JIS', 'UTF-8');
-            conv = iconv.convert(buf2);
+            //npm iconv
+            // iconv = new Iconv('SHIFT_JIS', 'UTF-8');
+            // conv = iconv.convert(buf2);
+
+            //npm iconv-lite
+            conv = Iconv.decode( buf2 , "Shift_JIS");
             TAG.content = String(conv);
           }
 
@@ -279,16 +325,25 @@ var _ID3Reader = (function(){
         detectResult = jschardet.detect(inWriteDataObj[i].dat); //タグの文字セットを取得
 
         if(detectResult.encoding == "ascii"){
-          iconv = new Iconv('utf-8', 'SHIFT_JIS');
-          buffer = iconv.convert(inWriteDataObj[i].dat);
+          //npm iconv
+          // iconv = new Iconv('utf-8', 'SHIFT_JIS');
+          // buffer = iconv.convert(inWriteDataObj[i].dat);
+
+          //npm iconv-lite
+          buffer = Iconv.encode(inWriteDataObj[i].dat, "Shift_JIS");
         }else{
-          iconv = new Iconv('utf-8', 'UTF-16LE');
-          buffer = iconv.convert(inWriteDataObj[i].dat);
+          // npm iconv
+          // iconv = new Iconv('utf-8', 'UTF-16LE');
+          // buffer = iconv.convert(inWriteDataObj[i].dat);
+
+          //npm iconv-lite
+          buffer = Iconv.encode(inWriteDataObj[i].dat, "utf16-le");
         }
 
         //タグ名
-        iconv = new Iconv('ascii', 'ascii');
-        tagBuffer = iconv.convert(tagName);
+        // iconv = new Iconv('ascii', 'ascii');
+        // tagBuffer = iconv.convert(tagName);
+        tagBuffer = Iconv.encode(inWriteDataObj[i].dat, "ascii");
 
         //タグサイズとその他の領域
         tagSizeBuffer = new Buffer((detectResult.encoding == "ascii" ? 7 : 9) + (tagName ==　"COMM" || tagName ==　"USLT" ? 4 : 0) );
@@ -431,7 +486,8 @@ var _ID3Reader = (function(){
     //ファイルを開く
     fs.open(file,'r',function(err,fd){
       if(err){
-        console.dir(err);
+        console.dir("ファイルを開けませんでした。filePath:"+file + " [error]:" + + err);
+        callback(id3);
         return;
       }
       id3       = {};
@@ -442,11 +498,14 @@ var _ID3Reader = (function(){
 
       fs.read(fd,header,0,10,0,function(err,bytesRead,buff){
         if( buff.toString('ascii',0,3) != 'ID3'){
-          console.log("このファイルは id3v2 ではありません。");
+          // callback(id3);
+          console.log("このファイルは id3v2 ではありません。id3v1としてファイルを開きます。filePath:" + file);
+          _ID3v1Reader.read(file, callback);  //_ID3v1Readerで処理を行う
           return;
         }
         if( !(buff[3] == 3 && buff[4] == 0)){
-          console.log("このファイルは id3v2 3.0 以外のID3規格であるため、開けません。");
+          callback(id3);
+          console.log("このファイルは id3v2 3.0 以外のID3規格であるため、開けません。filePath:" + file);
           return;
         }
 
@@ -477,7 +536,8 @@ var _ID3Reader = (function(){
             });
           });
         }else{
-          console.log("id3v2 3.0 フレームのデータがありません。");
+          console.log("id3v2 3.0 フレームのデータがありません。" + file);
+          callback(id3);
           return;
         }
 
@@ -557,33 +617,160 @@ var _ID3Reader = (function(){
   };
 
 
-})();
+})();    //jQuery Closure
+// };          //node.js
 
 
 
 
-// 使用例
-// _ID3Reader.read( "./mp3/edit test/test.mp3" , function(id3){console.log(id3)} );
 
-// //デスクトップパス取得
-// var nodePath = require("path");
-// var dir_home = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
-// var outpath = nodePath.join(dir_home, "Desktop", "out.mp3");
-// nodePath = null;
-// dir_home = null;
 
-// _ID3Reader.writeTag("./mp3/edit test/test.mp3", outpath ,
-//     [
-//       //はcafé
-//       {"tag": "artist", "dat":"三門忠司çafe"},
-//       {"tag": "track", "dat":"1"},
-//       {"tag": "title", "dat":"title"},
-//       {"tag": "album", "dat":"album"},
-//       {"tag": "genre", "dat":"genre"},
-//       {"tag": "year", "dat":"0000/00/00"},
-//       {"tag": "comment", "dat":"コメント欄です","lang":"jpn"},
-//       {"tag": "lyric", "dat":"歌詞の欄です","lang":"jpn"}
-//       // {"tag": "jacketImage", "dat":"*****"}
-//     ],
-//     function (id3){console.log(id3);}
-// );
+
+
+
+//id3v1のタグ情報を読み込む。
+var _ID3v1Reader = (function(){  //jquery
+// var _ID3v1Reader = new function(){  //node app
+
+  var fs        = require('fs');
+  var Buffer    = require('buffer').Buffer;
+  var jschardet = require('jschardet');   //npm
+  // var Iconv     = require('iconv').Iconv; //npm
+  var Iconv = require('iconv-lite');
+
+
+  //id3v1の読み込み
+  var read = function (file,_callback){
+    var callback = _callback;
+
+    var id3 = {};
+    var id3v1Frame ;
+    var stat;
+    var fileSize;
+    var raw_tags;
+
+    //ファイルを開く
+    fs.open(file,'r',function(err,fd){
+      if(err){
+        console.dir("ファイルを開けませんでした。filePath:"+file + " [error]:" + + err);
+        callback(id3);
+        return;
+      }
+
+      id3           = {};
+      id3v1Frame    = new Buffer(128);
+      stat          = fs.statSync(file);
+      fileSize      = stat.size;
+      stat          = null;
+
+      //ファイルサイズが128byte未満の場合、処理を終了
+      if(fileSize-128 < 0){
+        console.dir("ファイルサイズが小さすぎる為、mp3ファイルとして開けません。filePath:"+file);
+        callback(id3);
+        return;
+      }
+
+      fs.read(fd, id3v1Frame, 0, 128, fileSize-128, function(err,bytesRead,buff){
+
+        //id3v1としてタグ解析する。
+        if( buff.toString('ascii',0,3) == "TAG"){
+
+          id3.tags = [];
+          var bufftemp;
+
+          var title   = "";
+          var artist  = "";
+          var album   = "";
+          var year    = "";
+          var comment = "";
+          var track   = "";
+          var genre   = "";
+
+          function getTag(inBuff, inStartBuff, inTagSize){
+            bufftemp = null;
+            bufftemp = new Buffer(inTagSize);
+            inBuff.copy(bufftemp, 0, inStartBuff , inStartBuff+inTagSize);
+            var conv = Iconv.decode( bufftemp , "Shift_JIS");
+            return conv;
+          }
+
+          //id3v1の0x00 0x20埋めを削除する。
+          function deleteSpace(inStr){
+            return inStr.replace(/ +$/i, "").replace(/\u0000+$/g,"");
+          }
+
+          // 曲名
+          title   = getTag(buff, 3, 30);
+          // アーティスト名
+          artist  = getTag(buff, 33, 30);
+          // アルバム名
+          album   = getTag(buff, 63, 30);
+          // 年代
+          year    = getTag(buff, 93, 4);
+
+          // ID3v1.1
+          if(buff[125] == 0){
+            // コメント
+            comment = getTag(buff, 97, 28);
+            // トラック
+            track = getTag(buff, 126, 1);
+
+          // ID3v1.0
+          }else{
+            // コメント
+            comment = getTag(buff, 97, 30);
+          }
+          // ジャンル
+          if(buff[127] == 255){
+            genre = "";
+          }else{
+            genre = getTag(buff, 127, 1);
+          }
+
+          //返り値に格納
+          id3.tags = [
+            {"NAME":"title"   , "content": deleteSpace(title) },
+            {"NAME":"artist"  , "content": deleteSpace(artist) },
+            {"NAME":"album"   , "content": deleteSpace(album) },
+            {"NAME":"year"    , "content": deleteSpace(year) },
+            {"NAME":"comment" , "content": deleteSpace(comment) },
+            {"NAME":"track"   , "content": track },
+            {"NAME":"genre"   , "content": deleteSpace(genre) }
+          ];
+
+          callback(id3);
+          return;
+
+        //id3v1ではない。
+        }else{
+          console.dir("このファイルは id3v1 1.0以外の規格であるため、開けません。filePath:"+file);
+          callback(id3);
+          return;
+        }
+
+      });
+    });
+  }
+
+
+  function getGenre(inNo){
+    var genreArr = ["Blues", "Classic Rock", "Country", "Dance", "Disco", "Funk", "Grunge", "Hip-Hop", "Jazz", "Metal", "New Age", "Oldies", "Other", "Pop", "R&B", "Rap", "Reggae", "Rock", "Techno", "Industrial", "Alternative", "Ska", "Death Metal", "Pranks", "Soundtrack", "Euro-Techno", "Ambient", "Trip-Hop", "Vocal", "Jazz+Funk", "Fusion", "Trance", "Classical", "Instrumental", "Acid", "House", "Game", "Sound Clip", "Gospel", "Noise", "AlternRock", "Bass", "Soul", "Punk", "Space", "Meditative", "Instrumental Pop", "Instrumental Rock", "Ethnic", "Gothic", "Darkwave", "Techno-Industrial", "Electronic", "Pop-Folk", "Eurodance", "Dream", "Southern Rock", "Comedy", "Cult", "Gangsta", "Top 40", "Christian Rap", "Pop/Funk", "Jungle", "Native American", "Cabaret", "New Wave", "Psychadelic", "Rave", "Showtunes", "Trailer", "Lo-Fi", "Tribal", "Acid Punk", "Acid Jazz", "Polka", "Retro", "Musical", "Rock & Roll", "Hard Rock", "Folk", "Folk-Rock", "National Folk", "Swing", "Fast Fusion", "Bebob", "Latin", "Revival", "Celtic", "Bluegrass", "Avantgarde", "Gothic Rock", "Progressive Rock", "Psychedelic Rock", "Symphonic Rock", "Slow Rock", "Big Band", "Chorus", "Easy Listening", "Acoustic", "Humour", "Speech", "Chanson", "Opera", "Chamber Music", "Sonata", "Symphony", "Booty Bass", "Primus", "Porn Groove", "Satire", "Slow Jam", "Club", "Tango", "Samba", "Folklore", "Ballad", "Power Ballad", "Rhythmic Soul", "Freestyle", "Duet", "Punk Rock", "Drum Solo", "A capella", "Euro-House", "Dance Hall"];
+
+    if( inNo < 0 || inNo > genreArr.length-1)return "";
+    return genreArr[inNo];
+  }
+
+
+  return {
+    read : function (inMp3FilePath, inCallBackFunc){
+      read(inMp3FilePath , inCallBackFunc);
+    }
+  };
+
+
+})();    //jQuery Closure
+// };          //node.js
+
+
+
+_ID3Reader.read( "./mp3/itunes/baseFile.MP3" , function(id3){console.log(id3)} );
