@@ -40,34 +40,6 @@ var _FL = (function(){
 
 
 
-  //flickrから指定時刻以降のデータを取得
-  function getThumbCall(inMinDate, inCallFunc, inPer_page, inPage){
-
-    Flickr.authenticate(flickrOptions, function(error, flickr) {
-      //[get photo]
-      //unix timstamp -> http://url-c.com/tc/
-      var apiOptions = {
-        min_date:inMinDate,
-        per_page :inPer_page, //max500
-        page:inPage
-      };
-      flickr.photos.recentlyUpdated(apiOptions, function(err, result) {
-        if(err) {
-          // return console.error(error);
-          inCallFunc("");
-        }else{
-
-          if(result && result.photos.total){
-            inCallFunc(result.photos.photo);
-          }else{
-            inCallFunc("");
-          }
-        }
-      });
-    });
-  }
-
-
 
   //タイトルを変更
   function editTitleCall(inPhotoId, inTitle, inCallFunc){
@@ -161,6 +133,120 @@ var _FL = (function(){
   }
 
 
+
+
+  var _apiOptions_gtThmb;
+  var temp_photos = [];
+
+
+  //一部を取得
+  //指定した日時以降のデータのうち、指定したページの指定した数のリストを取得
+  function getThumbCall(inMinDate, inCallFunc, inPer_page, inPage){
+
+    Flickr.authenticate(flickrOptions, function(error, flickr) {
+      //[get photo]
+      //unix timstamp -> http://url-c.com/tc/
+      var _apiOptions_gtThmb = {
+        min_date:inMinDate,
+        per_page :inPer_page, //max500
+        page:inPage
+      };
+      flickr.photos.recentlyUpdated(_apiOptions_gtThmb, function(err, result) {
+        if(err) {
+          // return console.error(error);
+          inCallFunc("");
+        }else{
+
+          if(result && result.photos.total){
+            inCallFunc(result.photos.photo);
+          }else{
+            inCallFunc("");
+          }
+        }
+      });
+    });
+  }
+
+
+  //すべてを取得
+  //--------------------------------------------------------------------
+  //指定した日時以降のデータのうち、すべてを取得
+  function getThumbAllCall(inCallFunc){
+
+    Flickr.authenticate(flickrOptions, function(error, flickr) {
+
+        if(error != null){
+          inCallFunc("");
+        }else{
+          flickr.photos.recentlyUpdated(_apiOptions_gtThmb, function(err, result) {
+
+            if(err) {
+              // return console.error(error);
+              inCallFunc("");
+            }else{
+              // console.log("[getFl] photos.total:"+result.photos.total + " page:"+result.photos.page +"/"+result.photos.pages);
+              if(result && result.photos.total){
+
+                //一時的な配列に保持
+                 for(var i=0; i<result.photos.photo.length; i++){
+                    temp_photos.push(result.photos.photo[i]);
+                  }
+
+                //すべての処理が完了したら、コールバックを実行し処理を終了。
+                if(result.photos.page == result.photos.pages){
+                  inCallFunc(temp_photos);
+
+                //残りのページがあれば続きの処理を行う
+                }else{
+                  apiOption_pageCountUp();
+                  getFlThumbCall_reCall(inCallFunc);
+                }
+              }else{
+                inCallFunc("");
+              }
+
+            }
+          });
+        }
+
+    });
+
+  }
+
+  //再び実行
+  function getFlThumbCall_reCall(inCallFunc){
+    getThumbAllCall(inCallFunc);
+  }
+
+
+  //getThumbAllCall の apiに通信する際の初期化
+  function initVar_gtthmb(inMinDate, inPer_page, inPage){
+    temp_photos = null;
+    temp_photos = [];
+    _apiOptions_gtThmb = {
+      min_date: inMinDate,
+      per_page :inPer_page,
+      page: inPage
+    };
+  }
+
+  //getThumbAllCallの　次のページを取得
+  function apiOption_pageCountUp(){
+    var temp_min_date = _apiOptions_gtThmb.min_date;
+    var temp_per_page = _apiOptions_gtThmb.per_page;
+    var temp_page     = _apiOptions_gtThmb.page;
+
+    _apiOptions_gtThmb = {
+      min_date: temp_min_date,
+      per_page : temp_per_page,
+      page: temp_page + 1
+    };
+  }
+  //--------------------------------------------------------------------
+
+
+
+
   return {
     init: function (inFlickrOptions){
       flickrOptions = inFlickrOptions;
@@ -174,8 +260,16 @@ var _FL = (function(){
       //   access_token_secret: '*****'
       // };
     },
+    //指定した日時以降のデータのうち、指定したページの指定した数のリストを取得
+    //unix timstamp -> http://url-c.com/tc/
     getThumb: function (inMinDate, inCallFunc, inPer_page, inPage){
       getThumbCall(inMinDate, inCallFunc, inPer_page, inPage);
+    },
+    //指定した日時以降のデータのうち、すべてを取得
+    //unix timstamp -> http://url-c.com/tc/
+    getThumbAll: function (inMinDate, inCallFunc, inPer_page, inPage){
+      initVar_gtthmb(inMinDate, inPer_page, inPage);
+      getThumbAllCall(inCallFunc);
     },
     editTitle: function (inPhotoId, inTitle, inCallFunc){
       editTitleCall(inPhotoId, inTitle, inCallFunc);
