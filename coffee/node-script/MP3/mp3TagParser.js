@@ -22,7 +22,7 @@
 var _ID3TagParser = (function(){  //jquery closure
 // var _ID3Reader = new function(){  //node app
 
-  function parseID3Tag_cmd(inTagArr){
+  function parseID3Tag_cmd(inTagArr, isLyricData_enabled, isJacketData_enabled){
     var retObj = {};
 
     retObj.artist   = "";
@@ -33,8 +33,10 @@ var _ID3TagParser = (function(){  //jquery closure
     retObj.genre    = "";
     retObj.comment  = "";
     retObj.lyric    = "";
+    retObj.lyricAvailable = false;
     retObj.jacket   = "";
     retObj.jacketFormat = "";
+    retObj.jacketAvailable = false;
 
     for(var i=0; i<inTagArr.length; i++){
 
@@ -51,12 +53,18 @@ var _ID3TagParser = (function(){  //jquery closure
       }else if(inTagArr[i].NAME == "TCO" || inTagArr[i].NAME == "TCON" || inTagArr[i].NAME == "genre"){
         retObj.genre = inTagArr[i].content;
       }else if(inTagArr[i].NAME == "COM" || inTagArr[i].NAME == "COMM" || inTagArr[i].NAME == "comment"){
-        retObj.genre = inTagArr[i].content;
+        retObj.comment = inTagArr[i].content;
       }else if(inTagArr[i].NAME == "ULT" || inTagArr[i].NAME == "USLT" || inTagArr[i].NAME == "lyric"){
-        retObj.genre = inTagArr[i].content;
+        if(isLyricData_enabled){
+          retObj.lyric = inTagArr[i].content;
+        }
+        retObj.lyricAvailable = true;
       }else if(inTagArr[i].NAME == "PIC" || inTagArr[i].NAME == "APIC" || inTagArr[i].NAME == "jacket"){
-        retObj.jacket       = inTagArr[i].content;
-        retObj.jacketFormat = inTagArr[i].format;
+        if(isJacketData_enabled){
+          retObj.jacket       = inTagArr[i].content;
+          retObj.jacketFormat = inTagArr[i].format;
+        }
+        retObj.jacketAvailable = true;
       }
 
     }
@@ -65,8 +73,8 @@ var _ID3TagParser = (function(){  //jquery closure
   }
 
   return {
-    parseID3Tag : function (inTagArr){
-      return parseID3Tag_cmd(inTagArr);
+    parseID3Tag : function (inTagArr, isLyricData_enabled, isJacketData_enabled){
+      return parseID3Tag_cmd(inTagArr, isLyricData_enabled, isJacketData_enabled);
     }
   };
 

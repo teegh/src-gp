@@ -24,7 +24,6 @@
 // _ID3v2_3Reader.read( "./mp3/test/test(utf16le).MP3" , function(id3){console.log(id3)} );
 
 //
-
 // //デスクトップパス取得
 // var nodePath = require("path");
 // var dir_home = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
@@ -47,8 +46,6 @@
 //     ],
 //     function (id3){console.log(id3);}
 // );
-
-
 
 
 
