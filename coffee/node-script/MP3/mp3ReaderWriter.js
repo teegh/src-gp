@@ -1,21 +1,29 @@
 // ID3v2 2.3のタグ読み込みと書き込み
 // ID3v2.2, ID3v2.4, ID3v1.0, ID3v1.1の読み込みも可能
 //
+// replayGainを検出する-334Byte目か206Byte目か。
+//
 //　返り値 : id3
 // id3
-// .id3Info        id3の情報
-//   .version      ID3バージョン        <- id3.head.ver
-//   .frameSize    id3の領域サイズ     <- id3.head.size
-//   .tags         タグデータ配列       <- id3.tags
 //
 // .fileInfo       ファイルの情報
 //   .filePath     ファイルの場所
-//   .fileSize     ファイルサイズ         <- id3.body.size
+//   .fileSize     ファイルサイズ
+//
+// .id3Info        id3の情報
+//   .version      ID3バージョン
+//   .frameSize    id3の領域サイズ
+//   .tags         タグデータ配列
+//
+// .apeInfo        APEタグの情報(Replaygainなどの情報)
+//   .version      APEのバージョン
+//   .frameSize    APEの領域サイズ
+//   .tags         タグデータ配列
 //
 // .fileBuffer     id3に注目した、ファイルの各バイナリバッファデータ
-//   .id3Header    id3ヘッダー (id3v2.2, 2.3, 2.4のみ)  <- id3.head.binary
-//   .id3Frame     id3フレーム ( // )                  <- id3.id3Frame.binary
-//   .elseFrame    id3の領域以外のデータ                 <- id3.elseFrame.binary
+//   .id3Header    id3ヘッダー (id3v2.2, 2.3, 2.4のみ)
+//   .id3Frame     id3フレーム ( // )
+//   .elseFrame    id3の領域以外のデータ
 //
 // id3の種類と構造
 // http://eleken.y-lab.org/report/other/mp3tags.shtml
@@ -31,7 +39,7 @@
 // nodePath = null;
 // dir_home = null;
 
-// _ID3v2_3Reader.writeTag("./mp3/edit test/test.mp3", outpath ,
+// _ID3v2_3Writer.writeTag("./mp3/edit test/test.mp3", outpath ,
 //     [
 //       //はcafé
 //       {"tag": "artist", "dat":"三門忠司çafe"},
@@ -56,7 +64,6 @@
 // id3v2 writer
 var _ID3v2_3Writer = (function(){  //jquery closure
 // var _ID3v2_3Writer = new function(){  //node app
-
 
   var fs        = require('fs');
   var Buffer    = require('buffer').Buffer;
@@ -685,8 +692,9 @@ var _ID3v2_3Reader = (function(){  //jquery closure
 
 
   //id3v2.3としてバッファを解析する
-  var callback_readID3v23 = function( inID3, inBuff, inFd, inMainCallBackFunc){
+  var callback_readID3v23 = function( inFile, inID3, inBuff, inFd, inMainCallBackFunc){
 
+    var file      = inFile;
     var id3       = inID3;
     var buff      = inBuff;
     var fd        = inFd;
@@ -729,7 +737,7 @@ var _ID3v2_3Reader = (function(){  //jquery closure
         fs.close(fd,function(){
           parseTags( raw_tags,function(parsed_tags){
             id3.id3Info.tags = parsed_tags;
-            callback(id3);
+            onParseTags(inID3, callback , file);
           });
         });
       });
@@ -739,6 +747,18 @@ var _ID3v2_3Reader = (function(){  //jquery closure
       callback(id3);
       return;
     }
+  }
+
+  //タグ解析が完了したら
+  function onParseTags(inID3, inCallBackFunc, inFile){
+    //replayGainの解析
+    _Mp3ReplayGainFunc.readReplayGain(inID3, inFile, inCallBackFunc, callback_onReadReplayGain);
+  }
+
+  //replayGainの解析が完了したら
+  function callback_onReadReplayGain( inID3, inFile, inMainCallBackFunc){
+    inMainCallBackFunc(inID3);
+    return;
   }
 
   return {
@@ -916,8 +936,9 @@ var _ID3v2_2Reader = (function(){  //jquery
 
 
   //id3v2.2としてバッファを解析する
-  var callback_readID3v22 = function( inID3, inBuff, inFd, inMainCallBackFunc){
+  var callback_readID3v22 = function( inFile, inID3, inBuff, inFd, inMainCallBackFunc){
 
+    var file      = inFile;
     var id3       = inID3;
     var buff      = inBuff;
     var fd        = inFd;
@@ -952,11 +973,25 @@ var _ID3v2_2Reader = (function(){  //jquery
       fs.close(fd, function(){
         parseTags( raw_tags, function(parsed_tags){
           id3.id3Info.tags = parsed_tags;
-          callback(id3);
+
+          onParseTags(inID3, callback , file);
+
         });
       });
     });
 
+  }
+
+  //タグ解析が完了したら
+  function onParseTags(inID3, inCallBackFunc, inFile){
+    //replayGainの解析
+    _Mp3ReplayGainFunc.readReplayGain(inID3, inFile, inCallBackFunc, callback_onReadReplayGain);
+  }
+
+  //replayGainの解析が完了したら
+  function callback_onReadReplayGain( inID3, inFile, inMainCallBackFunc){
+    inMainCallBackFunc(inID3);
+    return;
   }
 
 
@@ -1000,8 +1035,9 @@ var _ID3v1Reader = (function(){  //jquery
 // var _ID3v1Reader = new function(){  //node app
 
   //id3v1としてバッファを解析する
-  var callback_readID3v1 = function( inID3, inBuff, inFd, inMainCallBackFunc){
+  var callback_readID3v1 = function( inFile, inID3, inBuff, inFd, inMainCallBackFunc){
 
+    var file      = inFile;
     var id3       = inID3;
     var buff      = inBuff;
     var callback  = inMainCallBackFunc;
@@ -1062,9 +1098,17 @@ var _ID3v1Reader = (function(){  //jquery
       {"NAME":"genre"   , "content": _Mp3UtilFunc.deleteSpace(genre) }
     ];
 
-    callback(id3);
+    //replayGainの解析
+    _Mp3ReplayGainFunc.readReplayGain(id3, file, callback, callback_onReadReplayGain);
+
+  }
+
+  //replayGainの解析が完了したら
+  function callback_onReadReplayGain( inID3, inFile, inMainCallBackFunc){
+    inMainCallBackFunc(inID3);
     return;
   }
+
 
   //バッファを文字列に変換
   function getTag(inBuff, inStartBuff, inTagSize){
@@ -1120,22 +1164,30 @@ var _Mp3UtilFunc = (function(){  //jquery closure
     //id3オブジェクトの値初期化
     getID3ObjectInit : function (){
       return {
+
+        "fileInfo" : {
+            "filePath"    : "",
+            "fileSize"    : 0
+        },
+
         "id3Info" : {
             "version"     : "",
-            "frameSize"   : "",
-            "tags"        : ""
-         },
+            "frameSize"   : 0,
+            "tags"        : []
+        },
 
-         "fileInfo" : {
-            "fileSize"    : ""
-         },
+        "apeInfo" : {
+            "version"     : "",
+            "frameSize"   : 0,
+            "tags"        : []
+        },
 
-         "fileBuffer" : {
+        "fileBuffer" : {
             "id3Header"         : "",
             "id3Frame"          : "",
             "elseFrame"         : "",
             "writeNewFileData"  : ""
-         }
+        }
       };
     },
 
@@ -1333,14 +1385,15 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
         return;
       }
 
-      callback_readBuffer(fd, id3, inReadBuffSize, isReadPositionIsHead, callback, inCallBack_onReadBuff);
+      callback_readBuffer(file, fd, id3, inReadBuffSize, isReadPositionIsHead, callback, inCallBack_onReadBuff);
     });
   }
 
 
   //開いたファイルのバッファを読み込む
-  function callback_readBuffer(inFd, inID3, inReadBuffSize, isReadPositionIsHead, inMainCallBackFunc, inCallBack_onReadBuff){
+  function callback_readBuffer(inFile, inFd, inID3, inReadBuffSize, isReadPositionIsHead, inMainCallBackFunc, inCallBack_onReadBuff){
 
+    var file        = inFile;
     var callback    = inMainCallBackFunc;
     var id3         = inID3;
     var Buffer      = require('buffer').Buffer;
@@ -1359,7 +1412,7 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
         return;
       }
 
-      inCallBack_onReadBuff(id3, buff, inFd, callback);
+      inCallBack_onReadBuff(file, id3, buff, inFd, callback);
       // callback_readID3v1(id3, buff, callback);
     });
   }
@@ -1375,8 +1428,139 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
 // };          //node.js
 
 
+//---------------------------------------------------
+// ReplayGainの読み込み処理をまとめたクロージャー
+//---------------------------------------------------
+var _Mp3ReplayGainFunc = (function(){  //jquery closure
+// var _Mp3ReplayGainFunc = new function (){
+
+  var backupID3;            //id3をバックアップ
+  var internalCallBackFunc; //このクロージャーの処理が完了したときに呼び出すコールバック
+
+  //バッファを開く
+  function readReplayGain(inID3, inFile, inReadBuffSize, isReadPositionIsHead ,inMainCallBackFunc, inInternalCallBackFunc){
+
+    backupID3 = inID3;                              //このクロージャーを通す前に、id3を保存(_Mp3UtilFileOpenFunc.openFileAndReadBuffで初期化されてしまう為)
+    internalCallBackFunc = inInternalCallBackFunc;  //このクロージャーの処理が完了したときのコールバック
+
+    _Mp3UtilFileOpenFunc.openFileAndReadBuff(inFile, inReadBuffSize, isReadPositionIsHead ,inMainCallBackFunc, callback_readReplayGain);
+  }
+
+  //バッファを解析する。
+  function callback_readReplayGain( infile, inID3, inBuff, inFd, inMainCallBackFunc){
+
+    // var id3       = inID3;   //初期化されたid3なので使用しない。backupID3を使用する
+    var buff          = inBuff;
+    var callback      = inMainCallBackFunc;
+    var Buffer        = require('buffer').Buffer;
+    var mainCallback  = inMainCallBackFunc;
+
+    //使い回しする変数
+    var tagSize       = 0;
+    var tagLength     = 0;
+    var readPos       = 0;
+    var s1;
+    var s2;
+    var s3;
+    var s4;
+    var tagName = "";
+    var tagData = "";
+    var i = 0;
+
+    //APEv1 ,v2　共通のフッターを取得 (32byte)
+    if( buff.toString('ascii', buff.length-160, buff.length-160 + 8) == "APETAGEX"){
+      readPos = 160;
+    }else if(buff.toString('ascii', buff.length-32, buff.length-32 + 8) == "APETAGEX"){
+      readPos = 32;
+    }else{
+      console.log("ReplayGainは検出できませんでした。");
+      internalCallBackFunc(backupID3, infile, mainCallback);
+      return;
+    }
+
+    //APETAGEXのフレームサイズを取得
+    s1 = buff[ buff.length-readPos +8 +4 ];
+    s2 = buff[ buff.length-readPos +8 +5 ];
+    s3 = buff[ buff.length-readPos +8 +6 ];
+    s4 = buff[ buff.length-readPos +8 +7 ];
+    tagSize = s1 + s2*Math.pow(16,2) + s3*Math.pow(16,4) + s4*Math.pow(16,6);
+    backupID3.apeInfo.frameSize = tagSize;
+
+    //APETAGEXデータの先頭位置を取得
+    var apetag_head_position =  buff.length-readPos-tagSize;
+
+    //APETAGEXの持っているタグ数を取得
+    s1 = buff[ buff.length-readPos +8 +4 +4 ];
+    s2 = buff[ buff.length-readPos +8 +4 +5 ];
+    s3 = buff[ buff.length-readPos +8 +4 +6 ];
+    s4 = buff[ buff.length-readPos +8 +4 +7 ];
+    tagLength = s1 + s2*Math.pow(16,2) + s3*Math.pow(16,4) + s4*Math.pow(16,6);
+
+    //APEv2　ヘッダーを取得。(32byte) ない場合はAPEv1となる。(ヘッダーが無いだけで形式は変わらない)
+    if( buff.toString('ascii', apetag_head_position, apetag_head_position + 8) == "APETAGEX"){
+      readPos = apetag_head_position + 32;
+      backupID3.apeInfo.version = "APEv2";
+    }else{
+      readPos = apetag_head_position;
+      backupID3.apeInfo.version = "APEv1";
+    }
 
 
+    // APETAGEXのタグ数だけループ
+    for(var n=0; n<tagLength; n++){
+      //APEタグを取得
+      //タグサイズを取得
+      s1 = buff[ readPos ];
+      s2 = buff[ readPos +1 ];
+      s3 = buff[ readPos +2 ];
+      s4 = buff[ readPos +3 ];
+      tagSize = s1 + s2*Math.pow(16,2) + s3*Math.pow(16,4) + s4*Math.pow(16,6);
+
+      readPos += 8;
+      tagName = "";
+      i=0;
+
+      while( buff[readPos+i] != 0 ){
+        tagName += buff.toString('ascii', readPos+i , readPos+i+1 );
+        i++;
+        if(i>100){
+          console.log("APEタグが正常に取得できませんでした。");
+          break;
+        }
+      }
+
+      //タグの内容を取得
+      tagData = buff.toString('ascii', readPos+i+1 , readPos+i+1 +tagSize );
+
+      // console.log("APE tagName: " + tagName + " / tagData: " + tagData);
+      backupID3.apeInfo.tags.push({
+        "NAME"    : tagName,
+        "SIZE"    : tagSize,
+        "content" : tagData
+      });
+
+      //次の読み出し位置をセット
+      readPos += i+1+tagSize;
+    }
+
+
+    internalCallBackFunc(backupID3, infile, mainCallback);
+    return;
+
+    //処理の完了。次の処理を呼び出す。
+    internalCallBackFunc(backupID3, infile, mainCallback);
+  }
+
+
+  return {
+    readReplayGain : function (inID3, inFile, inMainCallBackFunc, inInternalCallBackFunc){
+      //ファイル内すべてのバッファを開く
+      readReplayGain(inID3, inFile, Number(inID3.fileInfo.fileSize), true, inMainCallBackFunc, inInternalCallBackFunc);
+    }
+  };
+
+})();    //jQuery Closure
+// };          //node.js
 
 
 
@@ -1388,8 +1572,8 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
 //
 //---------------------------------------------------------------------------------------------------------
 //
-// _ID3v2_3Reader.read( "./mp3/ジャケット画像入り/v1.0.MP3" , function(id3){
-// _ID3v2_3Reader.read( "./mp3/edit test/v1.0.MP3" , function(id3){
+// _ID3v2_3Reader.read( "./mp3/edit test/v2.4.MP3" , function(id3){
+// _ID3v2_3Reader.read( "./mp3/edit test/v2.4.MP3" , function(id3){
 //   console.log(id3);
 //   console.log("tag:");
 //   console.log(id3.id3Info.tags);

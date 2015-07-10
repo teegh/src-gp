@@ -19,7 +19,7 @@
 //  year: "2015/05/27",
 //  genre: "J-POP男"
 // }
-var _ID3TagParser = (function(){  //jquery closure
+var _TagParser = (function(){  //jquery closure
 // var _ID3Reader = new function(){  //node app
 
   function parseID3Tag_cmd(inTagArr, isLyricData_enabled, isJacketData_enabled){
@@ -72,9 +72,25 @@ var _ID3TagParser = (function(){  //jquery closure
     return retObj;
   }
 
+  function getReplayGain(inAPETagArr){
+
+    var gainSetting_db = 0;
+    for(var i=0; i<inAPETagArr.length; i++){
+      if(inAPETagArr[i].NAME == "REPLAYGAIN_TRACK_GAIN"){
+         gainSetting_db = 89.0 - Number(inAPETagArr[i].content.replace(/ db/i,""));
+         break;
+      }
+    }
+
+    return gainSetting_db;
+  }
+
   return {
-    parseID3Tag : function (inTagArr, isLyricData_enabled, isJacketData_enabled){
-      return parseID3Tag_cmd(inTagArr, isLyricData_enabled, isJacketData_enabled);
+    parseID3Tag : function (inID3TagArr, isLyricData_enabled, isJacketData_enabled){
+      return parseID3Tag_cmd(inID3TagArr, isLyricData_enabled, isJacketData_enabled);
+    },
+    getReplayGain : function (inAPETagArr){
+      return getReplayGain(inAPETagArr);
     }
   };
 
