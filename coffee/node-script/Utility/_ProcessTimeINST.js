@@ -1,28 +1,50 @@
 //---------------------------
 //実行時間の計測
 //---------------------------
+//
+// (0) _ProcessTimeINST.startTimerINSTL();
+// (1) console.log( "処理時間: " +_ProcessTimeINST.getTimerINSTL()[1] +" "); //0-1間の処理時間
+// (2) console.log( "処理時間: " +_ProcessTimeINST.getTimerINSTL()[1] +" "); //1-2間の処理時間
 var _ProcessTimeINST = (function() {
 
+    var nowDate;
     var startTime;
+    var currentTime;
 
-    function computeDuration(ms){
-        var h = String(Math.floor(ms / 3600000) + 100).substring(1);
-        var m = String(Math.floor((ms - h * 3600000)/60000)+ 100).substring(1);
-        var s = String(Math.round((ms - h * 3600000 - m * 60000)/1000)+ 100).substring(1);
-        return h+'時間'+m+'分'+s+'秒';
+    function computeDuration(inMs){
+        var h = Math.floor(inMs / (60*60*1000) );
+        var m = Math.floor((inMs - h * (60*60*1000)) / (60*1000));
+        var s = Math.floor((inMs - h * (60*60*1000) - m * (60*1000))/1000);
+        var ms = inMs - h * (60*60*1000) - m * (60*1000) - s*1000;
+        return  h+'h '+m+'m '+s+'s '+ms+"ms (" + inMs+"ms)";
+        // return h+'h '+ getStr_ZeroPadding(m,2)+'m '+getStr_ZeroPadding(s,2)+'s '+getStr_ZeroPadding(ms,3)+"ms";
+    }
+
+    function getStr_ZeroPadding(inNumber, inPaddingNum){
+        return  String(inNumber + Math.pow(10,inPaddingNum) ).substring(1);
+    }
+
+    function setStartTime(){
+        nowDate     = new Date();
+        startTime   = nowDate.getTime();
+    }
+
+    function setAfterTime(){
+        nowDate     = new Date();
+        currentTime = nowDate.getTime();
     }
 
     return {
         //計測開始
         startTimerINSTL: function(){
-            startTime = null;
-            startTime = new Date();
+            setStartTime();
         },
-        //計測結果を取得 (返り値[mm秒,時分秒])
+        //計測結果を取得 ( 返り値[mm秒,時分秒] )
         getTimerINSTL: function(){
-            var currentTime = new Date();
-            var defTime = (currentTime - startTime);
-            return [defTime,computeDuration(defTime)];
+            setAfterTime();
+            var defTime     = currentTime - startTime;
+            setStartTime();
+            return [ defTime, computeDuration(defTime) ];
         }
     };
 })();

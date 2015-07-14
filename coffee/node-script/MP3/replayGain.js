@@ -13,6 +13,10 @@ var _ReplayGain = (function(){  //jquery closure
   var aacgain_path  = null;
   var trackGain     = 0;
 
+  //ログ出力
+  function log(inStr){
+    // cnosole.log(inStr);
+  }
 
   //aacgain.exeのダウンロードとパスを取得
   function aacgainDownload(){
@@ -54,19 +58,19 @@ var _ReplayGain = (function(){  //jquery closure
         var isSuccess = false;
 
         if(stdout){
-            console.log('[replayGain.js aacgain -r] stdout: \n' + stdout);
+            log('[replayGain.js aacgain -r] stdout: \n' + stdout);
             logMes += "\n" + stdout;
             isSuccess = true;
         }
         if(stderr){
-            console.log('[replayGain.js aacgain -r] stderr: \n' + stderr);
+            log('[replayGain.js aacgain -r] stderr: \n' + stderr);
             logMes += "\n" + stderr;
             isSuccess = true;
         }
 
         //エラーが発生した場合
         if (error !== null) {
-          console.log('[replayGain.js aacgain -r] aacgain Exec error: \n' + error);
+          log('[replayGain.js aacgain -r] aacgain Exec error: \n' + error);
           logMes += "\n" + error;
           isSuccess = false;
 
@@ -80,7 +84,7 @@ var _ReplayGain = (function(){  //jquery closure
           exec('"' + aacgain_path + '" -s c ' + ' "'+ inFilePath +'"', function (error, stdout, stderr) {
 
             if(stdout){
-              console.log('[replayGain.js aacgain -s] stdout: \n' + stdout);
+              log('[replayGain.js aacgain -s] stdout: \n' + stdout);
               logMes += "\n" + stdout;
               isSuccess = true;
 
@@ -90,20 +94,20 @@ var _ReplayGain = (function(){  //jquery closure
               for(var i=0; i<gainvarSplArr.length; i++){
                 if(gainvarSplArr[i].match(/Recommended "Track" dB change/i)){
                   trackGain = Number(gainvarSplArr[i].replace(/Recommended "Track" dB change: /i, ""));
-                  console.log("getTrackgain : : " + trackGain);
+                  log("getTrackgain : : " + trackGain);
                 }
               }
 
             }
             if(stderr){
-              console.log('[replayGain.js aacgain -s] stderr: \n' + stderr);
+              log('[replayGain.js aacgain -s] stderr: \n' + stderr);
               logMes += "\n" + stderr;
               isSuccess = true;
             }
 
             //エラーが発生した場合
             if (error !== null) {
-              console.log('[replayGain.js aacgain -s] aacgain Exec error: \n' + error);
+              log('[replayGain.js aacgain -s] aacgain Exec error: \n' + error);
               logMes += "\n" + error;
               isSuccess = false;
 

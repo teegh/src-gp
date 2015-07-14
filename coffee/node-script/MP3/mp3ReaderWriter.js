@@ -1,5 +1,5 @@
-// ID3v2 2.3のタグ読み込みと書き込み
-// ID3v2.2, ID3v2.4, ID3v1.0, ID3v1.1の読み込みも可能
+// ID3v2.3の書き込み
+// ID3v2.2, ID3v2.3, ID3v2.4, ID3v1.0, ID3v1.1の読み込みが可能
 //
 // replayGainを検出する-334Byte目か206Byte目か。
 //
@@ -56,6 +56,16 @@
 // );
 
 
+// todo
+// バッファの読み込みを一回だけにし、処理速度を速める
+// replaygainとid3の読み込み処理を切り分けて、両方とも解析できるようにする。
+//
+// まずはid3v1
+
+// fs.readで90msの処理時間がかかる。
+// 現状、id3v2.3のタグ読み込み時間は100-200ms程度
+
+//fs.readで一つ一つ読み込むのと、一度にバッファを取得し、forで順番にバッファを走査するのとでは、どちらが早い処理となるか？
 
 
 //---------------------------------------------------
@@ -719,6 +729,7 @@ var _ID3v2_3Reader = (function(){  //jquery closure
     if( (buff[3] == 4 || buff[3] == 3) && buff[4] == 0 ){
       if(buff[3] == 4)console.log("id3v2.4として開きます。" );
 
+
       // ID3v2.3、ID3v2.4として開く
       // ヘッダーの解析
       id3.id3Info.version       = '2.'+buff.readUInt8(3);
@@ -751,12 +762,14 @@ var _ID3v2_3Reader = (function(){  //jquery closure
 
   //タグ解析が完了したら
   function onParseTags(inID3, inCallBackFunc, inFile){
+
     //replayGainの解析
     _Mp3ReplayGainFunc.readReplayGain(inID3, inFile, inCallBackFunc, callback_onReadReplayGain);
   }
 
   //replayGainの解析が完了したら
   function callback_onReadReplayGain( inID3, inFile, inMainCallBackFunc){
+
     inMainCallBackFunc(inID3);
     return;
   }
@@ -1385,6 +1398,8 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
         return;
       }
 
+
+
       callback_readBuffer(file, fd, id3, inReadBuffSize, isReadPositionIsHead, callback, inCallBack_onReadBuff);
     });
   }
@@ -1420,12 +1435,15 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
 
   return {
     openFileAndReadBuff : function (inFile, inReadBuffSize, isReadPositionIsHead ,inMainCallBackFunc, inCallBack_onReadBuff){
+
       openFileAndReadBuff(inFile, inReadBuffSize, isReadPositionIsHead ,inMainCallBackFunc, inCallBack_onReadBuff);
     }
   };
 
 })();    //jQuery Closure
 // };          //node.js
+
+
 
 
 //---------------------------------------------------
@@ -1543,12 +1561,9 @@ var _Mp3ReplayGainFunc = (function(){  //jquery closure
       readPos += i+1+tagSize;
     }
 
-
-    internalCallBackFunc(backupID3, infile, mainCallback);
-    return;
-
     //処理の完了。次の処理を呼び出す。
     internalCallBackFunc(backupID3, infile, mainCallback);
+    return;
   }
 
 
