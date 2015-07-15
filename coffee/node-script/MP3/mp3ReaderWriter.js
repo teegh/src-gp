@@ -946,8 +946,6 @@ var _ID3v2_2Reader = (function(){  //jquery
   };
 
 
-
-
   //id3v2.2としてバッファを解析する
   var callback_readID3v22 = function( inFile, inID3, inBuff, inFd, inMainCallBackFunc){
 
@@ -986,13 +984,10 @@ var _ID3v2_2Reader = (function(){  //jquery
       fs.close(fd, function(){
         parseTags( raw_tags, function(parsed_tags){
           id3.id3Info.tags = parsed_tags;
-
           onParseTags(inID3, callback , file);
-
         });
       });
     });
-
   }
 
   //タグ解析が完了したら
@@ -1030,17 +1025,6 @@ var _ID3v2_2Reader = (function(){  //jquery
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 //---------------------------------------------------------------------------------------------------------------
 //id3v1のタグ情報を読み込む。
 //---------------------------------------------------------------------------------------------------------------
@@ -1064,8 +1048,11 @@ var _ID3v1Reader = (function(){  //jquery
     var track   = "";
     var genre   = "";
 
+    var pos = buff.length - 128;
+
     //id3v1ではない。
-    if( buff.toString('ascii',0,3) != "TAG"){
+    // if( buff.toString('ascii', pos ,3) != "TAG"){
+    if( !(buff[ pos+0 ] == 84 && buff[ pos+1 ] == 65 && buff[ pos+2 ] == 71)) {
       console.dir("このファイルは id3v1 1.0以外の規格であるため、開けません。");
       callback(id3);
       return;
@@ -1075,29 +1062,29 @@ var _ID3v1Reader = (function(){  //jquery
     id3.id3Info.tags        = [];
 
     // 曲名, アーティスト名, アルバム名, 年代 取得
-    title   = getTag(buff, 3, 30);
-    artist  = getTag(buff, 33, 30);
-    album   = getTag(buff, 63, 30);
-    year    = getTag(buff, 93, 4);
+    title   = getTag(buff, pos+3, 30);
+    artist  = getTag(buff, pos+33, 30);
+    album   = getTag(buff, pos+63, 30);
+    year    = getTag(buff, pos+93, 4);
 
     // ID3v1.1
     // コメント, トラック 取得
-    if(buff[125] == 0){
-      comment = getTag(buff, 97, 28);
-      track   = getTag(buff, 126, 1);
+    if(buff[pos+125] == 0){
+      comment = getTag(buff, pos+97, 28);
+      track   = getTag(buff, pos+126, 1);
       id3.id3Info.version = "1.1";
 
     // ID3v1.0
     // コメント 取得
     }else{
-      comment = getTag(buff, 97, 30);
+      comment = getTag(buff, pos+97, 30);
       id3.id3Info.version = "1.0";
     }
     // ジャンル
-    if(buff[127] == 255){
+    if(buff[pos+127] == 255){
       genre = "";
     }else{
-      genre = getTag(buff, 127, 1);
+      genre = getTag(buff, pos+127, 1);
     }
 
     //返り値に格納
@@ -1112,8 +1099,7 @@ var _ID3v1Reader = (function(){  //jquery
     ];
 
     //replayGainの解析
-    _Mp3ReplayGainFunc.readReplayGain(id3, file, callback, callback_onReadReplayGain);
-
+    _Mp3ReplayGainFunc.readReplayGain_fromBuff(id3, file, inBuff, inFd, callback, callback_onReadReplayGain);
   }
 
   //replayGainの解析が完了したら
@@ -1135,7 +1121,7 @@ var _ID3v1Reader = (function(){  //jquery
 
   return {
     read : function (inMp3FilePath,inCallBackFunc){
-      _Mp3UtilFileOpenFunc.openFileAndReadBuff(inMp3FilePath , 128, false, inCallBackFunc, callback_readID3v1);
+      _Mp3UtilFileOpenFunc.openFileAndReadBuff(inMp3FilePath , "all", true, inCallBackFunc, callback_readID3v1);
     }
   };
 
@@ -1363,17 +1349,16 @@ var _Mp3UtilFunc = (function(){  //jquery closure
 var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
 // var _Mp3UtilFileOpenFunc = new function (){
 
-
   //ファイルを開く
-  //inFile ：ファイルパス , inReadBuffSize :読み込むバッファサイズ , isReadPositionIsHead :バッファの先頭から読み込むか？(falseなら末尾から読み込み) ,inMainCallBackFunc :メイン関数から渡ってきた、最後に実行するコールバック , inCallBack_onReadBuff: バッファの読み込み後に実行するコールバック
   function openFileAndReadBuff(inFile, inReadBuffSize, isReadPositionIsHead ,inMainCallBackFunc, inCallBack_onReadBuff){
 
-    var file      = inFile;
-    var callback  = inMainCallBackFunc;
-    var fs        = require('fs');
+    var file          = inFile;
+    var callback      = inMainCallBackFunc;
+    var fs            = require('fs');
     var stat;
     var fileSize;
-    var id3       = _Mp3UtilFunc.getID3ObjectInit();
+    var id3           = _Mp3UtilFunc.getID3ObjectInit();
+    var readBuffSize  = inReadBuffSize;
 
     //ファイルサイズを調べる
     stat                  = fs.statSync(file);
@@ -1381,6 +1366,10 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
     stat                  = null;
     id3.fileInfo.fileSize = fileSize;
     id3.fileInfo.filePath = inFile;
+
+    if(readBuffSize == "all"){
+      readBuffSize = fileSize;
+    }
 
     //ファイルを開く
     console.dir("ファイルを開きます。filePath:"+file);
@@ -1392,15 +1381,13 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
         return;
       }
 
-      if(fileSize-inReadBuffSize < 0){
+      if(fileSize-readBuffSize < 0){
         console.dir("ファイルサイズが小さすぎる為、mp3ファイルとして開けません。");
         callback(id3);
         return;
       }
 
-
-
-      callback_readBuffer(file, fd, id3, inReadBuffSize, isReadPositionIsHead, callback, inCallBack_onReadBuff);
+      callback_readBuffer(file, fd, id3, readBuffSize, isReadPositionIsHead, callback, inCallBack_onReadBuff);
     });
   }
 
@@ -1434,6 +1421,14 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
 
 
   return {
+
+    //ファイルのバッファを読み込む。
+    //読み込み完了時のコールバックは inCallBack_onReadBuff(file, id3, buff, inFd, callback);
+    //inFile : ファイルパス
+    //inReadBuffSize : 読み込むバッファの数("all"と指定するとすべて)
+    //isReadPositionIsHead : (true)ファイルの先頭から読み込むか、(false)末端から読み込むか
+    //inMainCallBackFunc :メイン関数から渡ってきた、最後に実行するコールバック
+    //inCallBack_onReadBuff: バッファの読み込み後に実行するコールバック
     openFileAndReadBuff : function (inFile, inReadBuffSize, isReadPositionIsHead ,inMainCallBackFunc, inCallBack_onReadBuff){
 
       openFileAndReadBuff(inFile, inReadBuffSize, isReadPositionIsHead ,inMainCallBackFunc, inCallBack_onReadBuff);
@@ -1442,6 +1437,16 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
 
 })();    //jQuery Closure
 // };          //node.js
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1568,9 +1573,16 @@ var _Mp3ReplayGainFunc = (function(){  //jquery closure
 
 
   return {
+    //ファイルを展開し、すべてのバッファを開き、replayGainを解析する
     readReplayGain : function (inID3, inFile, inMainCallBackFunc, inInternalCallBackFunc){
-      //ファイル内すべてのバッファを開く
       readReplayGain(inID3, inFile, Number(inID3.fileInfo.fileSize), true, inMainCallBackFunc, inInternalCallBackFunc);
+    },
+
+    //入力されたバッファから、replayGainを解析する (ファイルを開く処理は省略)
+    readReplayGain_fromBuff : function (inID3, inFile, inBuff, inFd, inMainCallBackFunc, inInternalCallBackFunc){
+      internalCallBackFunc = inInternalCallBackFunc;  //このクロージャーの処理が完了したときのコールバック
+      backupID3 = inID3;
+      callback_readReplayGain( inFile, inID3, inBuff, inFd, inMainCallBackFunc);
     }
   };
 
