@@ -9,6 +9,7 @@ var _ProcessTimeINST = (function() {
 
     var nowDate;
     var startTime;
+    var saveStartTime;
     var currentTime;
 
     function computeDuration(inMs){
@@ -22,6 +23,11 @@ var _ProcessTimeINST = (function() {
 
     function getStr_ZeroPadding(inNumber, inPaddingNum){
         return  String(inNumber + Math.pow(10,inPaddingNum) ).substring(1);
+    }
+
+    function set_saveStartTime(){
+        saveStartTime = new Date();
+        saveStartTime = nowDate.getTime();
     }
 
     function setStartTime(){
@@ -38,8 +44,15 @@ var _ProcessTimeINST = (function() {
         //計測開始
         startTimerINSTL: function(){
             setStartTime();
+            set_saveStartTime();
         },
-        //計測結果を取得 ( 返り値[mm秒,時分秒] )
+        //startTimerINSTLからの経過時間を取得
+        getTotalTimerINSTL: function(){
+            setAfterTime();
+            var defTime     = currentTime - saveStartTime;
+            return [ defTime, computeDuration(defTime) ];
+        },
+        //ラップタイム計測結果を取得 ( 返り値[mm秒,時分秒] )
         getTimerINSTL: function(){
             setAfterTime();
             var defTime     = currentTime - startTime;

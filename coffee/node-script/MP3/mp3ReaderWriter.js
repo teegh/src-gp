@@ -56,16 +56,8 @@
 // );
 
 
-// todo
-// バッファの読み込みを一回だけにし、処理速度を速める
-// replaygainとid3の読み込み処理を切り分けて、両方とも解析できるようにする。
-//
-// まずはid3v1
+// fs.readで20ms～200msの処理時間がかかり、ボトルネックとなっている。
 
-// fs.readで90msの処理時間がかかる。
-// 現状、id3v2.3のタグ読み込み時間は100-200ms程度
-
-//fs.readで一つ一つ読み込むのと、一度にバッファを取得し、forで順番にバッファを走査するのとでは、どちらが早い処理となるか？
 
 
 //---------------------------------------------------
@@ -713,44 +705,44 @@ var _ID3v2_3Reader = (function(){  //jquery closure
     var Buffer    = require('buffer').Buffer;
     var fs        = require('fs');
 
+    var pos = 0;
 
-    if( buff.toString('ascii',0,3) != 'ID3'){
+    //1-3ByteのデータがID3でないとき、id3v1としてファイルを開く
+    if( !(buff[ pos+0 ] == 73 && buff[ pos+1 ] == 68 && buff[ pos+2 ] == 51) ) {
       console.log("id3v1としてファイルを開きます。");
       _ID3v1Reader.read(file, callback);  //_ID3v1Readerで処理を行う
       return;
     }
 
-    if( buff[3] == 2 && buff[4] == 0 ){
-      console.log("このファイルは id3v2.2規格です。filePath:" + file);
+    //4byte目のデータが2のとき、id3v2.2としてファイルを開く
+    if( buff[ pos+0 ] == 73 && buff[ pos+1 ] == 68 && buff[ pos+2 ] == 51 && buff[ pos+3 ] == 2) {
+       console.log("このファイルは id3v2.2規格です。filePath:" + file);
       _ID3v2_2Reader.read(file, callback);
       return;
     }
 
-    if( (buff[3] == 4 || buff[3] == 3) && buff[4] == 0 ){
-      if(buff[3] == 4)console.log("id3v2.4として開きます。" );
-
+    if( (buff[pos+3] == 4 || buff[pos+3] == 3) && buff[pos+4] == 0 ){
+      if(buff[pos+3] == 4)console.log("id3v2.4として開きます。" );
 
       // ID3v2.3、ID3v2.4として開く
       // ヘッダーの解析
-      id3.id3Info.version       = '2.'+buff.readUInt8(3);
-      id3.fileBuffer.id3Header  = buff;
-      id3.id3Info.frameSize     = _Mp3UtilFunc.getId3Size_onSyncSafe(buff.slice(6,10));
+      id3.id3Info.version       = '2.'+buff.readUInt8(pos+3);
+      id3.fileBuffer.id3Header  = _Mp3UtilFunc.getPartOfBuffer(buff, pos+0, 10);
+      id3.id3Info.frameSize     = _Mp3UtilFunc.getId3Size_onSyncSafe(buff.slice(pos+6,10));
 
       if(id3.id3Info.frameSize <= 0){
         console.log("id3v2 3.0 フレームのデータがありません。");
-        callback(id3);
+        _Mp3ReplayGainFunc.readReplayGain_fromBuff(id3, file, buff, fd, callback, callback_onReadReplayGain);
+        // callback(id3);
         return;
       }
 
       // ID3フレーム　各タグの解析
-      raw_tags = new Buffer(id3.id3Info.frameSize);
-      fs.read(fd,raw_tags, 0, id3.id3Info.frameSize, null, function(){
-        fs.close(fd,function(){
-          parseTags( raw_tags,function(parsed_tags){
-            id3.id3Info.tags = parsed_tags;
-            onParseTags(inID3, callback , file);
-          });
-        });
+      raw_tags = _Mp3UtilFunc.getPartOfBuffer(buff, 10, id3.id3Info.frameSize);
+      parseTags( raw_tags, function(parsed_tags){
+        id3.id3Info.tags = parsed_tags;
+        //replayGain
+        _Mp3ReplayGainFunc.readReplayGain_fromBuff(id3, file, buff, fd, callback, callback_onReadReplayGain);
       });
 
     }else{
@@ -760,23 +752,17 @@ var _ID3v2_3Reader = (function(){  //jquery closure
     }
   }
 
-  //タグ解析が完了したら
-  function onParseTags(inID3, inCallBackFunc, inFile){
-
-    //replayGainの解析
-    _Mp3ReplayGainFunc.readReplayGain(inID3, inFile, inCallBackFunc, callback_onReadReplayGain);
-  }
 
   //replayGainの解析が完了したら
   function callback_onReadReplayGain( inID3, inFile, inMainCallBackFunc){
-
     inMainCallBackFunc(inID3);
     return;
   }
 
   return {
     read : function (inMp3FilePath, inCallBackFunc){
-      _Mp3UtilFileOpenFunc.openFileAndReadBuff(inMp3FilePath , 10, true, inCallBackFunc, callback_readID3v23);
+      _Mp3UtilFileOpenFunc.openFileAndReadBuff(inMp3FilePath , "all", true, inCallBackFunc, callback_readID3v23);
+      // _Mp3UtilFileOpenFunc.openFileAndReadBuff(inMp3FilePath , 10, true, inCallBackFunc, callback_readID3v23);
     }
   };
 
@@ -957,43 +943,40 @@ var _ID3v2_2Reader = (function(){  //jquery
     var Buffer    = require('buffer').Buffer;
     var fs        = require('fs');
 
-    //id3v2.2以外の企画
-    if( buff.toString('ascii',0,3) != "ID3" || buff[3] != 2){
+    var pos = 0;
+
+    //id3v2.2以外の規格
+    if( !(buff[ pos+0 ] == 73 && buff[ pos+1 ] == 68 && buff[ pos+2 ] == 51 && buff[ pos+3 ] == 2)) {
       console.dir("このファイルは id3v2.2以外の規格であるため、開けません。");
       callback(id3);
       return;
     }
 
     //id3v2.2として解析する
-    tempBuff                  = _Mp3UtilFunc.getPartOfBuffer(buff, 6, 4);
+    tempBuff                  = _Mp3UtilFunc.getPartOfBuffer(buff, pos+6, 4);
     var id3FrameSize          = _Mp3UtilFunc.getId3Size_onSyncSafe(tempBuff);
 
     //ID3ヘッダーの情報
-    id3.id3Info.version       = '2.'+buff[3];
-    id3.fileBuffer.id3Header  = buff;
+    id3.id3Info.version       = '2.'+buff[pos+3];
+    id3.fileBuffer.id3Header  = _Mp3UtilFunc.getPartOfBuffer(buff, pos+0, 10);
     id3.id3Info.frameSize     = id3FrameSize;
 
     if(id3.id3Info.frameSize <= 0){
       console.log("id3v2.2 フレームのデータがありません。");
-      callback(id3);
+      _Mp3ReplayGainFunc.readReplayGain_fromBuff(id3, file, buff, fd, callback, callback_onReadReplayGain);
+      // callback(id3);
       return;
     }
 
-    raw_tags = new Buffer( id3.id3Info.frameSize );
-    fs.read(fd, raw_tags, 0, id3.id3Info.frameSize, null, function(){
-      fs.close(fd, function(){
-        parseTags( raw_tags, function(parsed_tags){
-          id3.id3Info.tags = parsed_tags;
-          onParseTags(inID3, callback , file);
-        });
-      });
-    });
-  }
 
-  //タグ解析が完了したら
-  function onParseTags(inID3, inCallBackFunc, inFile){
-    //replayGainの解析
-    _Mp3ReplayGainFunc.readReplayGain(inID3, inFile, inCallBackFunc, callback_onReadReplayGain);
+    // ID3フレーム　各タグの解析
+    raw_tags = _Mp3UtilFunc.getPartOfBuffer(buff, 10, id3.id3Info.frameSize);
+    parseTags( raw_tags, function(parsed_tags){
+      id3.id3Info.tags = parsed_tags;
+      //replayGain
+      _Mp3ReplayGainFunc.readReplayGain_fromBuff(id3, file, buff, fd, callback, callback_onReadReplayGain);
+    });
+
   }
 
   //replayGainの解析が完了したら
@@ -1006,15 +989,14 @@ var _ID3v2_2Reader = (function(){  //jquery
 
   return {
     read : function (inMp3FilePath, inCallBackFunc){
-      // read(inMp3FilePath , inCallBackFunc);
-      _Mp3UtilFileOpenFunc.openFileAndReadBuff(inMp3FilePath , 10, true, inCallBackFunc, callback_readID3v22);
+      // _Mp3UtilFileOpenFunc.openFileAndReadBuff(inMp3FilePath , 10, true, inCallBackFunc, callback_readID3v22);
+      _Mp3UtilFileOpenFunc.openFileAndReadBuff(inMp3FilePath , "all", true, inCallBackFunc, callback_readID3v22);
     }
   };
 
 
 })();    //jQuery Closure
 // };          //node.js
-
 
 
 
@@ -1128,6 +1110,10 @@ var _ID3v1Reader = (function(){  //jquery
 
 })();    //jQuery Closure
 // };          //node.js
+
+
+
+
 
 
 
@@ -1335,14 +1321,6 @@ var _Mp3UtilFunc = (function(){  //jquery closure
 
 
 
-
-
-
-
-
-
-
-
 //---------------------------------------------------
 // ファイル読み込み処理をまとめたクロージャー
 //---------------------------------------------------
@@ -1387,6 +1365,7 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
         return;
       }
 
+
       callback_readBuffer(file, fd, id3, readBuffSize, isReadPositionIsHead, callback, inCallBack_onReadBuff);
     });
   }
@@ -1405,7 +1384,6 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
     var fileSize    = id3.fileInfo.fileSize;
     var readBuffPosition = isReadPositionIsHead ? 0 : fileSize -inReadBuffSize;
 
-
     fs.read(inFd, id3v1Frame, 0, inReadBuffSize, readBuffPosition , function(err, bytesRead, buff){
 
       if(err){
@@ -1415,8 +1393,8 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
       }
 
       inCallBack_onReadBuff(file, id3, buff, inFd, callback);
-      // callback_readID3v1(id3, buff, callback);
     });
+
   }
 
 
@@ -1430,7 +1408,6 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
     //inMainCallBackFunc :メイン関数から渡ってきた、最後に実行するコールバック
     //inCallBack_onReadBuff: バッファの読み込み後に実行するコールバック
     openFileAndReadBuff : function (inFile, inReadBuffSize, isReadPositionIsHead ,inMainCallBackFunc, inCallBack_onReadBuff){
-
       openFileAndReadBuff(inFile, inReadBuffSize, isReadPositionIsHead ,inMainCallBackFunc, inCallBack_onReadBuff);
     }
   };
