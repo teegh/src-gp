@@ -28,34 +28,6 @@
 // id3の種類と構造
 // http://eleken.y-lab.org/report/other/mp3tags.shtml
 
-// 使用例
-// _ID3v2_3Reader.read( "./mp3/test/test(utf16le).MP3" , function(id3){console.log(id3)} );
-
-//
-// //デスクトップパス取得
-// var nodePath = require("path");
-// var dir_home = process.env[process.platform == "win32" ? "USERPROFILE" : "HOME"];
-// var outpath = nodePath.join(dir_home, "Desktop", "out.mp3");
-// nodePath = null;
-// dir_home = null;
-
-// _ID3v2_3Writer.writeTag("./mp3/edit test/test.mp3", outpath ,
-//     [
-//       //はcafé
-//       {"tag": "artist", "dat":"三門忠司çafe"},
-//       {"tag": "track", "dat":"1"},
-//       {"tag": "title", "dat":"title"},
-//       {"tag": "album", "dat":"album"},
-//       {"tag": "genre", "dat":"genre"},
-//       {"tag": "year", "dat":"0000/00/00"},
-//       {"tag": "comment", "dat":"コメント欄です","lang":"jpn"},
-//       {"tag": "lyric", "dat":"歌詞の欄です","lang":"jpn"}
-//       // {"tag": "jacket", "dat":"*****"}
-//     ],
-//     function (id3){console.log(id3);}
-// );
-
-
 // fs.readで20ms～200msの処理時間がかかり、ボトルネックとなっている。
 
 
@@ -562,7 +534,7 @@ var _ID3v2_3Reader = (function(){  //jquery closure
     var max = raw_tags.length;
     var pos = 0;
     var isUTF16;
-    var buf2;
+    var buf2 = null;
     var iconv;
     var conv;
     var TAG;
@@ -578,7 +550,6 @@ var _ID3v2_3Reader = (function(){  //jquery closure
           TAG.content = special_tags[TAG.NAME](raw_tags.slice(pos+10,pos+10+TAG.SIZE)) || 'FUCK IN COMPLETE THE FUCKING FUNCTION';
       }else{
         TAG.content = raw_tags.toString('utf8',pos+10,pos+10+TAG.SIZE).replace(/\u0000/g,'');
-
 
         if(TAG.SIZE != 0){
 
@@ -597,10 +568,9 @@ var _ID3v2_3Reader = (function(){  //jquery closure
             if(buf2[0]==1)isUTF16 = true;       //コメントと歌詞は1FEという構造にならないので1Byte目を注目
           }
 
-
           // id3v2.4 のとき  2:UTF-16(ビックエンディアン)と3:UTF-8の文字コードにも対応している。
           // 該当する場合には処理をやめる(まれなので)
-          if(buf2[0]==2 || buf2[0]==3){
+          if(buf2 != null && (buf2[0]==2 || buf2[0]==3)){
             TAG.content = "(識別できません)";
           }else{
 
@@ -1582,8 +1552,7 @@ var _Mp3ReplayGainFunc = (function(){  //jquery closure
 //   console.log("tag:");
 //   console.log(id3.id3Info.tags);
 // });
-
-
+//
 // _ID3v2_3Writer.writeTag("./mp3/ジャケット画像入り/v2.3.MP3", "./mp3/ジャケット画像入り/v1.0.MP3" ,
 //     [
 //       {"tag": "track", "dat":"1"},
