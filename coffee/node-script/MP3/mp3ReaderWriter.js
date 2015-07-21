@@ -28,7 +28,7 @@
 // id3の種類と構造
 // http://eleken.y-lab.org/report/other/mp3tags.shtml
 
-// fs.readで20ms～200msの処理時間がかかり、ボトルネックとなっている。
+// fs.readで20ms～200msの処理時間がかかり、ボトルネックとなっている。jqueryクロージャーとnode moduleの実行速度の差によるものか？
 
 
 
