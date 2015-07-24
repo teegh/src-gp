@@ -11,50 +11,16 @@
  */
 /*jslint white: true, browser: true, plusplus: true, indent: 4, maxerr: 50 */
 
-/*
-修正
+//仕様変更
+//Enterキーで入力モードに移り全選択状態とする。
+//オートコンプリート使用時に日本語文字を入れると、フォーカスが移るが、それを無効にする。
+//※変更箇所は //変更を確認
 
 
-ime入力時に１文字目でフォーカスが外れる問題(chromeのみ)、オートコンプリート時に同じくフォーカスが外れる問題の回避策。
 
-I think the following problems can be solved.
-A problem that occurs when i use the ime in google chrome.
-A problem that occurs when i use the ime in handsontable's autocomplete.
+//変更
+var __imeCode = false;
 
-
-handsontable.full.js
-
-line 6509
-
-```javascript
-function init() {
-    instance.addHook('afterDocumentKeyDown', onKeyDown);
-    //eventManager.addEventListener(document.documentElement, 'keydown', function(event) {
-    eventManager.addEventListener(document.documentElement, 'keyup', function(event) { //keydown -> keyup
-      instance.runHooks('afterDocumentKeyDown', event);
-    });
-```
-
-
-line 6902
-
-```javascript
-AutocompleteEditor.prototype.open = function() {
-...
-  //this.focus(); //comment off
-```
-
-line 6967
-
-```javascript
-AutocompleteEditor.prototype.updateChoicesList= function() {
-...
-
-  // this.instance.listen(); //comment off
-  // this.TEXTAREA.focus(); //comment off
-```
-
-*/
 window.Handsontable = {
   version: '0.16.0',
   buildDate: 'Fri Jul 10 2015 09:20:29 GMT+0200 (CEST)'
@@ -6375,6 +6341,7 @@ function EditorManager(instance, priv, selection) {
       destroyed = false,
       eventManager,
       activeEditor;
+
   eventManager = eventManagerObject(instance);
   function moveSelectionAfterEnter(shiftKey) {
     var enterMoves = typeof priv.settings.enterMoves === 'function' ? priv.settings.enterMoves(event) : priv.settings.enterMoves;
@@ -6412,6 +6379,7 @@ function EditorManager(instance, priv, selection) {
       selection.transformStart(0, -1);
     }
   }
+
   function onKeyDown(event) {
     var ctrlDown,
         rangeModifier;
@@ -6430,6 +6398,9 @@ function EditorManager(instance, priv, selection) {
     if (!selection.isSelected()) {
       return;
     }
+    //変更
+    __imeCode = event.keyCode == 229;
+
     ctrlDown = (event.ctrlKey || event.metaKey) && !event.altKey;
     if (activeEditor && !activeEditor.isWaiting()) {
       if (!helper.isMetaKey(event.keyCode) && !ctrlDown && !_this.isEditorOpened()) {
@@ -6504,6 +6475,10 @@ function EditorManager(instance, priv, selection) {
             _this.closeEditorAndSaveChanges(ctrlDown);
           }
           moveSelectionAfterEnter(event.shiftKey);
+
+          //変更
+          // _this.openEditor(null, event);
+
         } else {
           if (instance.getSettings().enterBeginsEditing) {
             _this.openEditor(null, event);
@@ -6552,7 +6527,7 @@ function EditorManager(instance, priv, selection) {
   }
   function init() {
     instance.addHook('afterDocumentKeyDown', onKeyDown);
-    eventManager.addEventListener(document.documentElement, 'keyup', function(event) {
+    eventManager.addEventListener(document.documentElement, 'keydown', function(event) {
       instance.runHooks('afterDocumentKeyDown', event);
     });
     function onDblClick(event, coords, elem) {
@@ -6565,6 +6540,8 @@ function EditorManager(instance, priv, selection) {
       destroyed = true;
     });
   }
+
+
   this.destroyEditor = function(revertOriginal) {
     this.closeEditor(revertOriginal);
   };
@@ -6816,7 +6793,12 @@ BaseEditor.prototype.beginEditing = function(initialValue, event) {
   this.open(event);
   this._opened = true;
   this.focus();
+
+  //変更　選択状態にする。
+  this.TEXTAREA.select();
+
   this.instance.view.render();
+
 };
 BaseEditor.prototype.finishEditing = function(restoreOriginalValue, ctrlDown, callback) {
   var _this = this,
@@ -6949,7 +6931,7 @@ AutocompleteEditor.prototype.open = function() {
   var that = this;
   var trimDropdown = this.cellProperties.trimDropdown === void 0 ? true : this.cellProperties.trimDropdown;
   this.TEXTAREA.style.visibility = 'visible';
-  // this.focus();
+  this.focus();
   choicesListHot.updateSettings({
     'colWidths': trimDropdown ? [dom.outerWidth(this.TEXTAREA) - 2] : void 0,
     width: trimDropdown ? dom.outerWidth(this.TEXTAREA) + dom.getScrollbarWidth() + 2 : void 0,
@@ -7030,8 +7012,13 @@ AutocompleteEditor.prototype.updateChoicesList = function(choices) {
   if (this.cellProperties.strict === true) {
     this.highlightBestMatchingChoice(highlightIndex);
   }
+
+  // 変更
+  if(!__imeCode) this.instance.listen();
+  if(!__imeCode) this.TEXTAREA.focus();
   // this.instance.listen();
   // this.TEXTAREA.focus();
+
   dom.setCaretPosition(this.TEXTAREA, pos, (pos != endPos ? endPos : void 0));
 };
 AutocompleteEditor.prototype.updateDropdownHeight = function() {
