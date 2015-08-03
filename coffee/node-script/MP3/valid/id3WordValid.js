@@ -107,10 +107,13 @@ var _ID3WordValid = (function(){  //jquery closure
     },
 
     //一部の全角記号
-    isNotZenkakuKigo : function(inStr){
+    isNotZenkakuKigo_yougaku : function(inStr){
       var retFlg = false;
       var mes = "";
-      var matchArr = inStr.match(/[＆‐―－’，．]/g);
+      // var matchArr = inStr.match(/[＆‐―－’，．]/g);  // J-POP 現在は判定しない
+      var matchArr = inStr.match(/[％＆’‘）（＋，－‐．＝＠［］＾＿｀｛｝「」]/g);  //洋楽
+
+
       if(matchArr){
         retFlg = false;
       }else{
@@ -125,7 +128,10 @@ var _ID3WordValid = (function(){  //jquery closure
       //半角記号。チェック除外文字：',.&-
       var retFlg = false;
       var mes = "";
-      var matchArr = inStr.match(/[)(=･"!#$%\\*+\/:;<>?@[\]^_`{|}~｡｢｣､]/g);
+      // var matchArr = inStr.match(/[)(=･"!#$%\\*+\/:;<>?@[\]^_`{|}~｡｢｣､]/g);
+      var matchArr = inStr.match(/[\)\(=･"!#\$%\\*\+\/:;<>\?@\[\]\^_`\{\}\|~｡｢｣､]/g);
+      // 洋楽　/[!"#$*\/:;<>?\\\|~｡､]/g
+
       if(matchArr){
         retFlg = false;
       }else{
@@ -134,6 +140,24 @@ var _ID3WordValid = (function(){  //jquery closure
       if(!retFlg)mes = "半角記号"+matchArr.toString()+"があります。全角記号に置き換えてください。";
       return mes;
     },
+
+    //一部の半角記号 洋楽
+    isNotHankakuKigo_yougaku : function(inStr){
+      //半角記号。チェック除外文字：',.&-
+      var retFlg = false;
+      var mes = "";
+      var matchArr = inStr.match(/[!"#$*\/:;<>?\\\|~｡､]/g); // 洋楽
+
+      if(matchArr){
+        retFlg = false;
+      }else{
+        retFlg = true;
+      }
+      if(!retFlg)mes = "半角記号"+matchArr.toString()+"があります。全角記号に置き換えてください。";
+      return mes;
+    },
+
+
 
     //全角英数字
     isNotZenkaku : function(inStr){

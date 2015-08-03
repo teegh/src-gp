@@ -63,7 +63,7 @@ var _FileRead = (function(){
     //ファイルの読み込み処理
     function readFile(inFilePath, inCallback){
         // alert(inFilePath);
-        retFileArr.push(inFilePath);
+        if( isReadPermission(inFilePath) )retFileArr.push(inFilePath);
         inCallback();     //asyncにqueの実行完了を伝える
     }
 
@@ -107,16 +107,17 @@ var _FileRead = (function(){
         if(readExtName.length == 0)return true;
         var flg = false;
         for(var i=0; i<readExtName.length; i++){
-            if("."+readExtName[i] == getExtName(inFile)){
+            if("."+readExtName[i].replace(".","") == getExtName(inFile)){
                 flg = true;
                 break;
             }
         }
+        if(!flg)console.log(inFile);
         return flg;
     }
     //拡張子を取得
     function getExtName(inFile){
-        return path.extname(inFile);
+        return path.extname( path.normalize(inFile) );
     }
     //初期化
     function initVar_call(){
