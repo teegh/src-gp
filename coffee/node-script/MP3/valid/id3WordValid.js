@@ -25,15 +25,17 @@ var _ID3WordValid = (function(){  //jquery closure
     },
 
     //ファイル名とid3のタイトル名は同じ
-    isSame_FileNameAndId3Titile : function (inFileName, inID3Title){
+    isSame_FileNameAndId3Titile : function (inFileName, inID3Title, intrack){
       var retFlg = false;
       var mes = "";
-      if(inID3Title == inFileName.replace(/^[0-9][0-9] - /i,"")){
+      var trackStr =  (Number(intrack) < 10 ? "0" : "")  + String(intrack) + " - ";
+
+      if(trackStr + inID3Title == inFileName){
         retFlg =  true;
       }else{
         retFlg =  false;
       }
-      if(!retFlg)mes = "ファイル名とタイトルが一致しません。同じ内容にしてください。";
+      if(!retFlg)mes = "トラック番号とファイル場所と曲名が一致しません。同じ内容にしてください。";
       return mes;
     },
 
