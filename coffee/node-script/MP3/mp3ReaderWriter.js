@@ -495,7 +495,6 @@ var _ID3v2_3Reader = (function(){  //jquery closure
 
   var fs        = require('fs');
   var Buffer    = require('buffer').Buffer;
-  var jschardet = require('jschardet');   //npm
   var Iconv     = require('iconv-lite');
 
   // // // Credits to esailja //
