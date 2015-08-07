@@ -53,6 +53,11 @@ var _ID3v2_3Writer = (function(){  //jquery closure
     elseFrame = new Buffer(inElseFrameSize);  //バッファを作成
     fs.read(fd, elseFrame, 0, inElseFrameSize, inStartPosition, function(err,bytesRead,buff){
 
+      //id3v1.0 又は1.1タグが含まれるとき、末尾から128バイトは除外する。
+      if(elseFrame[elseFrame.length-128] == 84 && elseFrame[elseFrame.length-127] == 65 && elseFrame[elseFrame.length-126] == 71){
+        elseFrame = _Mp3UtilFunc.getPartOfBuffer(elseFrame, 0,elseFrame.length-128);
+      }
+
       //ID3以降のフレームを変数id3に保持
       inID3.fileBuffer.elseFrame = elseFrame;
 
@@ -444,11 +449,21 @@ var _ID3v2_3Writer = (function(){  //jquery closure
           //   complete_callBackFn(id3);
           // }
 
+          var p_elseFrameSize = 0;
+          var p_startPosition = 0;
+          if(id3.id3Info.version == "1.0" || id3.id3Info.version == "1.1"){
+            p_elseFrameSize = id3.fileInfo.fileSize;
+            p_startPosition = 0;
+          }else{
+            p_elseFrameSize = id3.fileInfo.fileSize - (id3.id3Info.frameSize + id3.fileBuffer.id3Header.length);
+            p_startPosition = id3.id3Info.frameSize + id3.fileBuffer.id3Header.length;
+          }
+
          //ID3フレーム以降のデータを抽出　
           setElseFrame(fd ,
               id3 ,
-              id3.fileInfo.fileSize - (id3.id3Info.frameSize + id3.fileBuffer.id3Header.length) ,
-           id3.id3Info.frameSize + id3.fileBuffer.id3Header.length,
+              p_elseFrameSize ,
+              p_startPosition,
               nxFn_setID3Frame
           );
 

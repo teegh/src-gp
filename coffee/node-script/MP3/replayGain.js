@@ -15,7 +15,7 @@ var _ReplayGain = (function(){  //jquery closure
 
   //ログ出力
   function log(inStr){
-    // cnosole.log(inStr);
+    // console.log(inStr);
   }
 
   //aacgain.exeのダウンロードとパスを取得

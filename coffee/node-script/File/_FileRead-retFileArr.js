@@ -28,7 +28,6 @@ var _FileRead = (function(){
     //ファイルがディレクトリであるか？
     //yes : ディレクトリの中身をqueタスクに追加
     //no : 読み込み処理関数を呼ぶ。
-    //
     //callbackはasync(que)のタスクが実行完了した事を伝えるコールバック
     function checkFileIsDirectory(fileObj,callback) {
 
@@ -37,7 +36,6 @@ var _FileRead = (function(){
             callback();
             return;
         }
-
 
         if (fs.statSync(fileObj.file).isDirectory()) {
 
