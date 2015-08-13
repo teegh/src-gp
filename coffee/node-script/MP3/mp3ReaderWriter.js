@@ -1037,7 +1037,7 @@ var _ID3v1Reader = (function(){  //jquery
     // コメント, トラック 取得
     if(buff[pos+125] == 0){
       comment = getTag(buff, pos+97, 28);
-      track   = getTag(buff, pos+126, 1);
+      if(buff[pos+126] != 0)track   = getTag(buff, pos+126, 1);
       id3.id3Info.version = "1.1";
 
     // ID3v1.0

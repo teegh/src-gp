@@ -5,11 +5,13 @@
 var _ID3WordValid = (function(){  //jquery closure
 // var _ID3WordValid = new function(){  //node app
 
-  //-----------------------------------------
-  //ID3フレーム以降のデータを抽出
-  //-----------------------------------------
-  function orgfunc(){
 
+  function getTrackStr(inTrack){
+    if(Number(inTrack) < 10){
+      return "0" + String(inTrack);
+    }else{
+      return inTrack;
+    }
   }
 
   return {
@@ -28,18 +30,42 @@ var _ID3WordValid = (function(){  //jquery closure
       return mes;
     },
 
-    //ファイル名とid3のタイトル名は同じ
-    isSame_FileNameAndId3Titile : function (inFileName, inID3Title, intrack){
+    //ファイル名とid3のタイトル名が一致しているか
+    isSame_FileNameAndId3Titile : function (inFileName, inID3Title){
       var retFlg = false;
       var mes = "";
-      var trackStr =  (Number(intrack) < 10 ? "0" : "")  + String(intrack) + " - ";
+      var fileN = inFileName.replace(/^[0-9][0-9] - /i , "");
 
-      if(trackStr + inID3Title == inFileName){
+      if(inID3Title == fileN){
         retFlg =  true;
       }else{
         retFlg =  false;
       }
-      if(!retFlg)mes = "トラック番号とファイル場所と曲名が一致しません。同じ内容にしてください。";
+      if(!retFlg)mes = "ファイル名(ファイル場所)と曲名が一致しません。同じ内容にしてください。";
+      return mes;
+    },
+
+    //ファイル名のトラック番号とid3のトラック番号が一致しているか
+    isSame_FileNameTrackAndId3Track : function (inFileName, inTrack){
+      var retFlg = false;
+      var mes = "";
+      var fileN = inFileName.replace(/^[0-9][0-9] - /i , "");
+      var trackStr = inFileName.replace(fileN,"");
+
+      if(trackStr == getTrackStr(inTrack) + " - "){
+        retFlg =  true;
+      }else{
+        retFlg =  false;
+      }
+      if(!retFlg)mes = "ファイル名が「NN - 」の形式になっていません。または、ファイル名(ファイル場所)に含まれるトラック番号とトラックが一致しません。同じ内容にしてください。";
+      return mes;
+    },
+
+    isNumeric : function (inStr){
+      var mes = "";
+      if(inStr != String(Number(inStr))){
+        mes = "数字のみを入力してください。";
+      }
       return mes;
     },
 

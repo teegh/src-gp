@@ -41,28 +41,46 @@ var _TagParser = (function(){  //jquery closure
     for(var i=0; i<inTagArr.length; i++){
 
       if(inTagArr[i].NAME == "TP1" || inTagArr[i].NAME == "TPE1" || inTagArr[i].NAME == "artist"){
-        retObj.artist = inTagArr[i].content;
+        if(inTagArr[i].content != null && inTagArr[i].content != undefined && inTagArr[i].content != NaN){
+          retObj.artist = inTagArr[i].content;
+        }
       }else if(inTagArr[i].NAME == "TAL" || inTagArr[i].NAME == "TALB" || inTagArr[i].NAME == "album"){
-        retObj.album = inTagArr[i].content;
+        if(inTagArr[i].content != null && inTagArr[i].content != undefined && inTagArr[i].content != NaN){
+          retObj.album = inTagArr[i].content;
+        }
       }else if(inTagArr[i].NAME == "TT2" || inTagArr[i].NAME == "TIT2" || inTagArr[i].NAME == "title"){
-        retObj.title = inTagArr[i].content;
+        if(inTagArr[i].content != null && inTagArr[i].content != undefined && inTagArr[i].content != NaN){
+          retObj.title = inTagArr[i].content;
+        }
       }else if(inTagArr[i].NAME == "TRK" || inTagArr[i].NAME == "TRCK" || inTagArr[i].NAME == "track"){
-        retObj.track = inTagArr[i].content;
+        if(inTagArr[i].content != null && inTagArr[i].content != undefined && inTagArr[i].content != NaN){
+          retObj.track = inTagArr[i].content;
+        }
       }else if(inTagArr[i].NAME == "TYE" || inTagArr[i].NAME == "TYER" || inTagArr[i].NAME == "year" || inTagArr[i].NAME == "TDRL"){
-        retObj.year = inTagArr[i].content;
+        if(inTagArr[i].content != null && inTagArr[i].content != undefined && inTagArr[i].content != NaN){
+          retObj.year = inTagArr[i].content;
+        }
       }else if(inTagArr[i].NAME == "TCO" || inTagArr[i].NAME == "TCON" || inTagArr[i].NAME == "genre"){
-        retObj.genre = inTagArr[i].content;
+        if(inTagArr[i].content != null && inTagArr[i].content != undefined && inTagArr[i].content != NaN){
+          retObj.genre = inTagArr[i].content;
+        }
       }else if(inTagArr[i].NAME == "COM" || inTagArr[i].NAME == "COMM" || inTagArr[i].NAME == "comment"){
-        retObj.comment = inTagArr[i].content;
+        if(inTagArr[i].content != null && inTagArr[i].content != undefined && inTagArr[i].content != NaN){
+          retObj.comment = inTagArr[i].content;
+        }
       }else if(inTagArr[i].NAME == "ULT" || inTagArr[i].NAME == "USLT" || inTagArr[i].NAME == "lyric"){
         if(isLyricData_enabled){
-          retObj.lyric = inTagArr[i].content;
+          if(inTagArr[i].content != null && inTagArr[i].content != undefined && inTagArr[i].content != NaN){
+            retObj.lyric = inTagArr[i].content;
+          }
         }
         retObj.lyricAvailable = true;
       }else if(inTagArr[i].NAME == "PIC" || inTagArr[i].NAME == "APIC" || inTagArr[i].NAME == "jacket"){
         if(isJacketData_enabled){
-          retObj.jacket       = inTagArr[i].content;
-          retObj.jacketFormat = inTagArr[i].format;
+          if(inTagArr[i].content != null && inTagArr[i].content != undefined && inTagArr[i].content != NaN){
+            retObj.jacket       = inTagArr[i].content;
+            retObj.jacketFormat = inTagArr[i].format;
+          }
         }
         retObj.jacketAvailable = true;
       }
