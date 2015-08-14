@@ -14,6 +14,15 @@ var _ID3WordValid = (function(){  //jquery closure
     }
   }
 
+  function getMatchString(inMatchArr){
+    var retStr = "";
+    for(var i=0; i<inMatchArr.length; i++){
+      if(retStr != "")retStr += " と ";
+      retStr += inMatchArr[i];
+    }
+    return retStr;
+  }
+
   return {
 
     //年代の入力形式
@@ -170,7 +179,7 @@ var _ID3WordValid = (function(){  //jquery closure
       }else{
         retFlg = true;
       }
-      if(!retFlg)mes = "全角記号" + matchArr.toString() +"があります。半角記号に置き換えてください。";
+      if(!retFlg)mes = "全角記号 " + getMatchString(matchArr) +" があります。半角記号に置き換えてください。";
       return mes;
     },
 
@@ -192,7 +201,7 @@ var _ID3WordValid = (function(){  //jquery closure
       }else{
         retFlg = true;
       }
-      if(!retFlg)mes = "半角記号"+matchArr.toString()+"があります。全角記号に置き換えてください。";
+      if(!retFlg)mes = "半角記号 "+ getMatchString(matchArr)+" があります。全角記号に置き換えてください。";
       return mes;
     },
 
@@ -212,7 +221,7 @@ var _ID3WordValid = (function(){  //jquery closure
       }else{
         retFlg = true;
       }
-      if(!retFlg)mes = "半角記号"+matchArr.toString()+"があります。全角記号に置き換えてください。";
+      if(!retFlg)mes = "半角記号 "+ getMatchString(matchArr)+" があります。全角記号に置き換えてください。";
       return mes;
     },
 
@@ -232,7 +241,7 @@ var _ID3WordValid = (function(){  //jquery closure
       }else{
         retFlg = true;
       }
-      if(!retFlg)mes = "全角英数字"+matchArr.toString()+"があります。半角英数字に置き換えてください。";
+      if(!retFlg)mes = "全角英数字 "+ getMatchString(matchArr)+" があります。半角英数字に置き換えてください。";
       return mes;
     },
 
@@ -275,13 +284,13 @@ var _ID3WordValid = (function(){  //jquery closure
       if(matchArr5)retFlg = false;
 
       var matchmes = "";
-      if(matchArr1)matchmes += (matchmes != "" ? "," : "") + matchArr1.toString();
-      if(matchArr2)matchmes += (matchmes != "" ? "," : "") + matchArr2.toString();
-      if(matchArr3)matchmes += (matchmes != "" ? "," : "") + matchArr3.toString();
-      if(matchArr4)matchmes += (matchmes != "" ? "," : "") + matchArr4.toString();
-      if(matchArr5)matchmes += (matchmes != "" ? "," : "") + matchArr5.toString();
+      if(matchArr1)matchmes += (matchmes != "" ? " と " : "") + getMatchString(matchArr1);
+      if(matchArr2)matchmes += (matchmes != "" ? " と " : "") + getMatchString(matchArr2);
+      if(matchArr3)matchmes += (matchmes != "" ? " と " : "") + getMatchString(matchArr3);
+      if(matchArr4)matchmes += (matchmes != "" ? " と " : "") + getMatchString(matchArr4);
+      if(matchArr5)matchmes += (matchmes != "" ? " と " : "") + getMatchString(matchArr5);
 
-      if(!retFlg)mes = "機種依存文字(" +matchmes+ ")が含まれています。可能な限り代替できる文字に置き換えてださい。";
+      if(!retFlg)mes = "機種依存文字 " +matchmes+ " が含まれています。可能な限り代替できる文字に置き換えてださい。";
       return mes;
     }
   };
