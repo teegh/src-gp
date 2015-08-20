@@ -2,13 +2,17 @@
 //
 //　・モジュール読み込み時に、aacgain.exeをダウンロード
 //　・applyGain()でreplay gainを適用
+//　・ファイルパスにunicodeが含まれるとaacgain.exeでは実行できない(Can't open ***.mp3 for reading)
+//　　-> 一時的にファイル名を変更し、aacgainを適用。
 //
 var _ReplayGain = (function(){  //jquery closure
 // var _ReplayGain = new function(){  //node app
 
-  var exec          = require("child_process").exec;
-  var path          = require("path");
   var BinWrapper    = require('bin-wrapper');
+
+  var exec          = require("child_process").exec;
+  var fs            = require('fs');
+  var path          = require("path");
   var aac_bin       = new BinWrapper(); //{"skipCheck":true}
   var aacgain_path  = null;
   var trackGain     = 0;
@@ -42,6 +46,43 @@ var _ReplayGain = (function(){  //jquery closure
   aacgainDownload();
 
 
+  //----------------------------
+  // ファイル名の一時的な変更
+  //----------------------------
+  var beforeFileName;
+  var tempFileName;
+  function replace_tempFileName(inFilePath){
+    //ファイル名を一旦変更 unixtimeをファイル名とする。
+    var fname = path.normalize(inFilePath);
+    var fBaseName = path.basename(inFilePath);
+    var timeStamp = ((new Date()).getTime() % 86400000 ).toString(26)
+
+    beforeFileName = fname;
+    // tempFileName = fname.replace(fBaseName,"") + String(parseInt((new Date())/1000)) + path.extname(inFilePath);
+
+    tempFileName = fname.replace(fBaseName,"") + "TMP" +timeStamp + path.extname(inFilePath);
+
+    log("[REPLACE TMP] ");
+    log(" ->OLD: "+beforeFileName);
+    log(" ->NEW: "+tempFileName);
+    log("[CHECK LENGTH] ");
+    log(" ->LENGTH: "+tempFileName.length + "(" + (tempFileName.length < 256) + ")");
+
+    //Windowsのファイルパス長256を超える場合、パスを返さない
+    if(tempFileName.length >= 256)return null;
+
+    fs.renameSync(beforeFileName,tempFileName);
+    return tempFileName;
+
+  }
+  function replace_beforeFileName(){
+    fs.renameSync(tempFileName,beforeFileName);
+  }
+
+
+  //----------------------------
+  // replay gainの適用
+  //----------------------------
   function applyGain(inReplayGainDB, inFilePath, inCallBackFunc){
       //C:\\Users\\usen V-2\\Documents\\hdd\\mp3Editor\\aacgain\\test
 
@@ -50,8 +91,14 @@ var _ReplayGain = (function(){  //jquery closure
       return;
     }
 
+    var tmpFilePath = replace_tempFileName(inFilePath);
+    if(!tmpFilePath){
+      inCallBackFunc(false , 0, "ファイルパス名が長すぎるため、MP3Gainを適用できませんでした。" , inFilePath);
+      return;
+    }
+
     // aacgain.exe -r -c -d 3 nogain.mp3'
-    exec('"' + aacgain_path + '" -r -c -d ' + String(inReplayGainDB-89) + ' "'+ inFilePath +'"', function (error, stdout, stderr) {
+    exec('"' + aacgain_path + '" -r -c -d ' + String(inReplayGainDB-89) + ' "'+ tmpFilePath +'"', function (error, stdout, stderr) {
 
 
         var logMes = "";
@@ -70,6 +117,10 @@ var _ReplayGain = (function(){  //jquery closure
 
         //エラーが発生した場合
         if (error !== null) {
+
+          //ファイル名を元に戻す
+          replace_beforeFileName();
+
           log('[replayGain.js aacgain -r] aacgain Exec error: \n' + error);
           logMes += "\n" + error;
           isSuccess = false;
@@ -81,7 +132,10 @@ var _ReplayGain = (function(){  //jquery closure
         }else{
 
           //適用値を調べる(stdoutから値を抜き出す)
-          exec('"' + aacgain_path + '" -s c ' + ' "'+ inFilePath +'"', function (error, stdout, stderr) {
+          exec('"' + aacgain_path + '" -s c ' + ' "'+ tmpFilePath +'"', function (error, stdout, stderr) {
+
+            //ファイル名を元に戻す
+            replace_beforeFileName();
 
             if(stdout){
               log('[replayGain.js aacgain -s] stdout: \n' + stdout);

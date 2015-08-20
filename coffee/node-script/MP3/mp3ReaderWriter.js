@@ -1,6 +1,9 @@
 // ID3v2.3の書き込み
 // ID3v2.2, ID3v2.3, ID3v2.4, ID3v1.0, ID3v1.1の読み込みが可能
 //
+// id3を返す。
+// エラー判定は、(id3.error.errorMessage != "") == trueか否かで判定
+//
 // replayGainを検出する-334Byte目か206Byte目か。
 //
 //　返り値 : id3
@@ -25,11 +28,13 @@
 //   .id3Frame     id3フレーム ( // )
 //   .elseFrame    id3の領域以外のデータ
 //
+//  .error
+//    .errorMessage 処理中のエラーメッセージを格納
+//
 // id3の種類と構造
 // http://eleken.y-lab.org/report/other/mp3tags.shtml
 
 // fs.readで20ms～200msの処理時間がかかり、ボトルネックとなっている。jqueryクロージャーとnode moduleの実行速度の差によるものか？
-
 
 
 //---------------------------------------------------
@@ -286,6 +291,8 @@ var _ID3v2_3Writer = (function(){  //jquery closure
     //id3v2のフレームサイズの制限をこえる場合は処理を中止
     if(temp_ID3Size > 268435455){
       inID3.fileBuffer.id3Header = null;
+      console.dir("id3v2のフレームサイズの上限をこえるデータ量のため、正常に書き込みできませんでした。[setID3FrameSize]");
+      id3.error.errorMessage += "id3v2のフレームサイズの上限をこえるデータ量のため、正常に書き込みできませんでした。[setID3FrameSize]";
       inCallBackFn();
       return;
     }
@@ -342,7 +349,12 @@ var _ID3v2_3Writer = (function(){  //jquery closure
     //ファイル書き出し
     fs.writeFile(infilePath, outbuff, function (err) {
       clearVar();
-      if (err) throw err;
+      if (err){
+        console.dir("ファイルを正常に書き込みできませんでした。[outputMP3]:"+err);
+        id3.error.errorMessage += "ファイルを正常に書き込みできませんでした。[outputMP3]:"+err;
+        inCallBackFn();
+        throw err;
+      }
       // console.log('mp3 file saved!');
       inCallBackFn();
     });
@@ -364,6 +376,12 @@ var _ID3v2_3Writer = (function(){  //jquery closure
     _ID3v2_3Reader.read(inOpenFile,
       function(id3){
         //読み込みが完了したら、writeDataObjでタグを書き込む。
+
+        //読み込みの時点でエラーが発生している場合、処理を中断
+        if(id3.error.errorMessage != ""){
+          complete_callBackFn(id3);
+          return;
+        }
 
         //ヘッダーを抽出　(readメソッドで抽出済)
         // id3.fileBuffer.id3Header
@@ -403,7 +421,9 @@ var _ID3v2_3Writer = (function(){  //jquery closure
         //ファイルを開く
         fs.open(inOpenFile,'r',function(err,fd){
           if(err){
-            console.dir(err);
+            console.dir("ファイルを正常に開けませんでした。[writeTag]:"+err);
+            id3.error.errorMessage += "ファイルを正常に開けませんでした。[writeTag]:"+err;
+            complete_callBackFn(id3);
             return;
           }
 
@@ -424,6 +444,8 @@ var _ID3v2_3Writer = (function(){  //jquery closure
             //id3のフレームサイズを計算し、エラーが発生した場合は処理を終了。
             if(id3.fileBuffer.id3Header == null){
               completeFn_error();
+              return;
+
             //正常な場合はファイル書き出し
             }else{
               console.log("3. ID3FrameSize get Success !!");
@@ -437,8 +459,11 @@ var _ID3v2_3Writer = (function(){  //jquery closure
             complete_callBackFn(id3);
           };
           var completeFn_error = function (){
-            console.log("id3 write error!!");
-            complete_callBackFn(null);
+            console.log("ファイルを正常に書き込みできません。書き込むデータがありませんでした。");
+            id3.error.errorMessage += "ファイルを正常に書き込みできません。書き込むデータがありませんでした。";
+            complete_callBackFn(id3);
+            // complete_callBackFn(null);
+            return;
           };
 
           //---------------------------
@@ -543,8 +568,8 @@ var _ID3v2_3Reader = (function(){  //jquery closure
   }
 
 
-  // ID3v2.3のタグ解析
-  function parseTags (raw_tags,callback){
+  // ID3v2.3 または ID3v2.4 のタグ解析
+  function parseTags ( inMinorVersion ,raw_tags,callback){
     var max = raw_tags.length;
     var pos = 0;
     var isUTF16;
@@ -555,13 +580,38 @@ var _ID3v2_3Reader = (function(){  //jquery closure
     var parsed_tags = [];
 
     while( pos < max-10){ //id3のフレームヘッダー(10byte)を除いた領域までループ
-      TAG = {
-        NAME : raw_tags.toString('ascii',pos,pos+4),
-        SIZE : raw_tags.readUInt32BE(pos+4)
-      };
+
+      //ID3v2.3
+      if(inMinorVersion == 3){
+        TAG = {
+          NAME : raw_tags.toString('ascii',pos,pos+4),
+          // SIZE : _Mp3UtilFunc.getId3Size_onSyncSafe(raw_tags.slice(pos+4,pos+8))
+          SIZE : raw_tags.readUInt32BE(pos+4)
+        };
+      //ID3v2.4
+      }else if(inMinorVersion == 4){
+        TAG = {
+          NAME : raw_tags.toString('ascii',pos,pos+4),
+          SIZE : _Mp3UtilFunc.getId3Size_onSyncSafe(raw_tags.slice(pos+4,pos+8))
+          // SIZE : raw_tags.readUInt32BE(pos+4)
+        };
+      }
+
+      //debug
+      // console.log("----------");
+      // console.log("max:" + max);
+      // console.log(TAG);
+      // console.log("if " + String(pos + (10+TAG.SIZE)) + ">" + String(max));
+
+
+      //想定しているID3フレームサイズよりも、読み取り位置が大きい場合、ID3フレームサイズが不正と判断する。
+      if(pos + (10+TAG.SIZE) > max){
+        callback(null);
+        return;
+      }
 
       if( special_tags[TAG.NAME] !== undefined){
-          TAG.content = special_tags[TAG.NAME](raw_tags.slice(pos+10,pos+10+TAG.SIZE)) || 'FUCK IN COMPLETE THE FUCKING FUNCTION';
+        TAG.content = special_tags[TAG.NAME](raw_tags.slice(pos+10,pos+10+TAG.SIZE)) || 'FUCK IN COMPLETE THE FUCKING FUNCTION';
       }else{
         TAG.content = raw_tags.toString('utf8',pos+10,pos+10+TAG.SIZE).replace(/\u0000/g,'');
 
@@ -671,6 +721,7 @@ var _ID3v2_3Reader = (function(){  //jquery closure
         parsed_tags.push(TAG);
       }
       pos += (10+TAG.SIZE);
+
     }
     callback(parsed_tags);
   };
@@ -723,14 +774,21 @@ var _ID3v2_3Reader = (function(){  //jquery closure
 
       // ID3フレーム　各タグの解析
       raw_tags = _Mp3UtilFunc.getPartOfBuffer(buff, 10, id3.id3Info.frameSize);
-      parseTags( raw_tags, function(parsed_tags){
+      parseTags( buff[pos+3], raw_tags, function(parsed_tags){
+        if(!parsed_tags){
+          console.log("mp3ファイルのID3フレームサイズが不正です。ファイルが破損している可能性があります。");
+          id3.error.errorMessage += "mp3ファイルのID3フレームサイズが不正です。ファイルが破損している可能性があります。";
+          callback(id3);
+          return;
+        }
         id3.id3Info.tags = parsed_tags;
         //replayGain
         _Mp3ReplayGainFunc.readReplayGain_fromBuff(id3, file, buff, fd, callback, callback_onReadReplayGain);
       });
 
     }else{
-      console.log("読み込みできません。このファイルはサポート外の形式です。");
+      console.log("mp3ファイルのID3タグの情報を識別できません。サポート外の形式です。");
+      id3.error.errorMessage += "mp3ファイルのID3タグの情報を識別できません。サポート外の形式です。";
       callback(id3);
       return;
     }
@@ -818,6 +876,18 @@ var _ID3v2_2Reader = (function(){  //jquery
         NAME : raw_tags.toString('ascii',pos,pos+3),
         SIZE : temp_buffer.readUInt32BE(0)
       };
+
+      // //debug
+      // console.log("----------");
+      // console.log("max:" + max);
+      // console.log(TAG);
+      // console.log("if " + String(pos + (10+TAG.SIZE)) + ">" + String(max));
+
+      //想定しているID3フレームサイズよりも、読み取り位置が大きい場合、ID3フレームサイズが不正と判断する。
+      if(pos + (6+TAG.SIZE) > max){
+        callback(null);
+        return;
+      }
 
       //タグの中身を取得
       TAG.content = "";
@@ -931,7 +1001,8 @@ var _ID3v2_2Reader = (function(){  //jquery
 
     //id3v2.2以外の規格
     if( !(buff[ pos+0 ] == 73 && buff[ pos+1 ] == 68 && buff[ pos+2 ] == 51 && buff[ pos+3 ] == 2)) {
-      console.dir("このファイルは id3v2.2以外の規格であるため、開けません。");
+      console.dir("mp3ファイルのタグ情報をid3v2.2と認識して開きましたが、規格外の形式であるため処理を中断しました。");
+      id3.error.errorMessage += "mp3ファイルのタグ情報をid3v2.2と認識して開きましたが、規格外の形式であるため処理を中断しました。";
       callback(id3);
       return;
     }
@@ -956,6 +1027,14 @@ var _ID3v2_2Reader = (function(){  //jquery
     // ID3フレーム　各タグの解析
     raw_tags = _Mp3UtilFunc.getPartOfBuffer(buff, 10, id3.id3Info.frameSize);
     parseTags( raw_tags, function(parsed_tags){
+
+      if(!parsed_tags){
+        console.log("mp3ファイルのID3フレームサイズが不正です。ファイルが破損している可能性があります。");
+        id3.error.errorMessage += "mp3ファイルのID3フレームサイズが不正です。ファイルが破損している可能性があります。";
+        callback(id3);
+        return;
+      }
+
       id3.id3Info.tags = parsed_tags;
       //replayGain
       _Mp3ReplayGainFunc.readReplayGain_fromBuff(id3, file, buff, fd, callback, callback_onReadReplayGain);
@@ -1019,7 +1098,8 @@ var _ID3v1Reader = (function(){  //jquery
     //id3v1ではない。
     // if( buff.toString('ascii', pos ,3) != "TAG"){
     if( !(buff[ pos+0 ] == 84 && buff[ pos+1 ] == 65 && buff[ pos+2 ] == 71)) {
-      console.dir("このファイルは id3v1 1.0以外の規格であるため、開けません。");
+      console.dir("mp3ファイルのタグ情報をid3v1と認識して開きましたが、規格外の形式であるため処理を中断しました。");
+      id3.error.errorMessage += "mp3ファイルのタグ情報をid3v1と認識して開きましたが、規格外の形式であるため処理を中断しました。";
       callback(id3);
       return;
     }
@@ -1156,7 +1236,12 @@ var _Mp3UtilFunc = (function(){  //jquery closure
             "id3Frame"          : "",
             "elseFrame"         : "",
             "writeNewFileData"  : ""
+        },
+
+        "error" : {
+            "errorMessage" : ""
         }
+
       };
     },
 
@@ -1338,13 +1423,15 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
     fs.open(file,'r', function(err,fd){
 
       if(err){
-        console.dir("ファイルを開けませんでした。" + err);
+        console.dir("mp3ファイルを正常に開けませんでした。"+err);
+        id3.error.errorMessage += "mp3ファイルを正常に開けませんでした。"+err;
         callback(id3);
         return;
       }
 
       if(fileSize-readBuffSize < 0){
-        console.dir("ファイルサイズが小さすぎる為、mp3ファイルとして開けません。");
+        console.dir("ファイルサイズが小さすぎる為、mp3ファイルとして正常に開けませんでした。");
+        id3.error.errorMessage += "ファイルサイズが小さすぎる為、mp3ファイルとして正常に開けませんでした。";
         callback(id3);
         return;
       }
@@ -1371,7 +1458,8 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
     fs.read(inFd, id3v1Frame, 0, inReadBuffSize, readBuffPosition , function(err, bytesRead, buff){
 
       if(err){
-        console.dir("ファイルのバッファを読み込めませんでした。" + err);
+        console.dir("mp3ファイルのバッファを正常に読み込めませんでした。" + err);
+        id3.error.errorMessage += "mp3ファイルのバッファを正常に読み込めませんでした。" + err;
         callback(id3);
         return;
       }
