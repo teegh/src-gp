@@ -39,22 +39,22 @@ var _ID3WordValid = (function(){  //jquery closure
       return mes;
     },
 
-    //ファイル名とid3のタイトル名が一致しているか
+    //ファイル名とid3のタイトルが一致しているか否か
     isSame_FileNameAndId3Titile : function (inFileName, inID3Title){
       var retFlg = false;
       var mes = "";
       var fileN = inFileName.replace(/^[0-9][0-9] - /i , "");
 
-      if(inID3Title == fileN){
+      if(fileN == inID3Title){
         retFlg =  true;
       }else{
         retFlg =  false;
       }
-      if(!retFlg)mes = "ファイル名(ファイル場所)と曲名が一致しません。同じ内容にしてください。";
+      if(!retFlg)mes = "ファイル名に含まれるタイトルと曲名が一致しません。同じ内容にしてください。";
       return mes;
     },
 
-    //ファイル名のトラック番号とid3のトラック番号が一致しているか
+    //ファイル名に含まれるトラック番号とトラックが一致しているか否か
     isSame_FileNameTrackAndId3Track : function (inFileName, inTrack){
       var retFlg = false;
       var mes = "";
@@ -66,10 +66,67 @@ var _ID3WordValid = (function(){  //jquery closure
       }else{
         retFlg =  false;
       }
-      if(!retFlg)mes = "ファイル名が「NN - 」の形式になっていません。または、ファイル名(ファイル場所)に含まれるトラック番号とトラックが一致しません。同じ内容にしてください。";
+      if(!retFlg)mes = "ファイル名が「NN - 」の形式になっていません。または、ファイル名に含まれるトラック番号とトラックが一致しません。同じ内容にしてください。";
       return mes;
     },
 
+
+
+    //ファイル名とファイルパスに含まれるファイル名が一致しているか否か
+    //var oldFilePath = path.normalize(inFilePath);
+    //var newFilePath = oldFilePath.replace(path.basename(oldFilePath),"") + inNewFileName + path.extname(oldFilePath);
+    isSame_FileNameAndFilePath : function (inNewFilePath, inOldFilePath){
+      var retFlg = false;
+      var mes = "";
+
+      if(inNewFilePath == inOldFilePath){
+        retFlg =  true;
+      }else{
+        retFlg =  false;
+      }
+      if(!retFlg)mes = "ファイル名と、ファイル場所に含まれるファイル名が一致しません。ただし、ファイル名を新たに変更したい場合は問題ありません。";
+      return mes;
+    },
+
+
+
+    //ファイル名に入力できない記号があるか否か
+    isFileNameProhibitedCharacters : function(inStr){
+      var retFlg = false;
+
+      var targStr = inStr;
+      if(targStr == null || targStr == undefined)targStr = "";
+
+      var mes = "";
+      var matchArr = targStr.match(/[\\\/:*\?"<>|]/g);
+      if(matchArr){
+        retFlg = false;
+      }else{
+        retFlg = true;
+      }
+      if(!retFlg)mes = "ファイル名として入力できない記号 " + getMatchString(matchArr) +" があります。全角文字や別の文字に置き換えてください。";
+      return mes;
+    },
+
+
+    //ファイルの長さが256以上となっている
+    isFileNameLength : function(inStr){
+      var retFlg = false;
+
+      var targStr = inStr;
+      if(targStr == null || targStr == undefined)targStr = "";
+
+      var mes = "";
+      if(targStr.length >= 256){
+        retFlg = false;
+      }else{
+        retFlg = true;
+      }
+      if(!retFlg)mes = "ファイルパスが長すぎます。短いファイル名に変更するか、ファイルの場所を移動させてください。";
+      return mes;
+    },
+
+    //数字か否か
     isNumeric : function (inStr){
       var mes = "";
       if(inStr != String(Number(inStr))){

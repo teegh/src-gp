@@ -1581,7 +1581,7 @@ var _Mp3ReplayGainFunc = (function(){  //jquery closure
     // APETAGEXのタグ数だけループ
     for(var n=0; n<tagLength; n++){
       //APEタグを取得
-      //タグサイズを取得
+      //タグの中身のサイズを取得
       s1 = buff[ readPos ];
       s2 = buff[ readPos +1 ];
       s3 = buff[ readPos +2 ];
@@ -1600,6 +1600,8 @@ var _Mp3ReplayGainFunc = (function(){  //jquery closure
           break;
         }
       }
+      //タグ名を大文字に変換
+      if(tagName && tagName != "")tagName = tagName.toUpperCase();
 
       //タグの内容を取得
       tagData = buff.toString('ascii', readPos+i+1 , readPos+i+1 +tagSize );
