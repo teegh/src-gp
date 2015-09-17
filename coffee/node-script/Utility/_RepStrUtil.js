@@ -49,7 +49,7 @@ var _RepStrUtil = (function() {
             return (zeroString + String(inNum)).slice(-1*inDigitsNum);
         },
 
-        //16進数のカラーコードをrgb(##, ##, ##)の形式に変換する。
+        //16進数のカラーコード(#000000)をrgb(##, ##, ##)の形式に変換する。
         //http://php.o0o0.jp/article/jquery-rgb_color
         Rep_HEXColorToRGBColor : function (inStr){
 

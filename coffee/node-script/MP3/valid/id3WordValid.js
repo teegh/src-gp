@@ -43,9 +43,15 @@ var _ID3WordValid = (function(){  //jquery closure
     isSame_FileNameAndId3Titile : function (inFileName, inID3Title){
       var retFlg = false;
       var mes = "";
-      var fileN = inFileName.replace(/^[0-9][0-9] - /i , "");
 
-      if(fileN == inID3Title){
+      var fname = inFileName;
+      var id3Title = inID3Title;
+      if(fname == null || fname == undefined)fname = "";
+      if(id3Title == null || id3Title == undefined)id3Title = "";
+
+      var fileN = fname.replace(/^[0-9][0-9] - /i , "");
+
+      if(fileN == id3Title){
         retFlg =  true;
       }else{
         retFlg =  false;
@@ -58,10 +64,16 @@ var _ID3WordValid = (function(){  //jquery closure
     isSame_FileNameTrackAndId3Track : function (inFileName, inTrack){
       var retFlg = false;
       var mes = "";
-      var fileN = inFileName.replace(/^[0-9][0-9] - /i , "");
-      var trackStr = inFileName.replace(fileN,"");
 
-      if(trackStr == getTrackStr(inTrack) + " - "){
+      var fname = inFileName;
+      var trk = inTrack;
+      if(fname == null || fname == undefined)fname = "";
+      if(trk == null || trk == undefined)trk = "";
+
+      var fileN = fname.replace(/^[0-9][0-9] - /i , "");
+      var trackStr = fname.replace(fileN,"");
+
+      if(trackStr == getTrackStr(trk) + " - "){
         retFlg =  true;
       }else{
         retFlg =  false;
@@ -78,8 +90,13 @@ var _ID3WordValid = (function(){  //jquery closure
     isSame_FileNameAndFilePath : function (inNewFilePath, inOldFilePath){
       var retFlg = false;
       var mes = "";
+      var nfp = inNewFilePath;
+      var ofp = inOldFilePath;
 
-      if(inNewFilePath == inOldFilePath){
+      if(nfp == null || nfp == undefined)nfp = "";
+      if(ofp == null || ofp == undefined)ofp = "";
+
+      if(nfp == ofp){
         retFlg =  true;
       }else{
         retFlg =  false;
