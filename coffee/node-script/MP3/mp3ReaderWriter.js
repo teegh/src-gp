@@ -41,8 +41,8 @@
 // ID3v2.3でファイルを書き出す
 //---------------------------------------------------
 // id3v2 writer
-var _ID3v2_3Writer = (function(){  //jquery closure
-// var _ID3v2_3Writer = new function(){  //node app
+var _ID3v2_3Writer = (function(){//jquery closure
+// var _ID3v2_3Writer = new function(){//node app
 
   var fs        = require('fs');
   var Buffer    = require('buffer').Buffer;
@@ -505,8 +505,8 @@ var _ID3v2_3Writer = (function(){  //jquery closure
   };
 
 
-})();    //jQuery Closure
-// };          //node.js
+})();//jQuery Closure
+// };//node.js
 
 
 
@@ -530,7 +530,7 @@ var _ID3v2_3Writer = (function(){  //jquery closure
 // ID3v2.3のリーダー
 //---------------------------------------------------
 // id3v2 reader
-var _ID3v2_3Reader = (function(){  //jquery closure
+var _ID3v2_3Reader = (function(){//jquery closure
 // var _ID3v2_3Reader = new function(){  //node app
 
   var fs        = require('fs');
@@ -809,8 +809,8 @@ var _ID3v2_3Reader = (function(){  //jquery closure
   };
 
 
-})();    //jQuery Closure
-// };          //node.js
+})();//jQuery Closure
+// };  //node.js
 
 
 
@@ -840,7 +840,7 @@ var _ID3v2_3Reader = (function(){  //jquery closure
 //---------------------------------------------------------------------------------------------------------------
 //id3v2.2 のタグ情報を読み込む。
 //---------------------------------------------------------------------------------------------------------------
-var _ID3v2_2Reader = (function(){  //jquery
+var _ID3v2_2Reader = (function(){//jquery closure
 // var _ID3v2_2Reader = new function(){  //node app
 
 
@@ -1058,7 +1058,7 @@ var _ID3v2_2Reader = (function(){  //jquery
   };
 
 
-})();    //jQuery Closure
+})();//jQuery Closure
 // };          //node.js
 
 
@@ -1073,7 +1073,7 @@ var _ID3v2_2Reader = (function(){  //jquery
 //---------------------------------------------------------------------------------------------------------------
 //id3v1のタグ情報を読み込む。
 //---------------------------------------------------------------------------------------------------------------
-var _ID3v1Reader = (function(){  //jquery
+var _ID3v1Reader = (function(){//jquery closure
 // var _ID3v1Reader = new function(){  //node app
 
   //id3v1としてバッファを解析する
@@ -1172,7 +1172,7 @@ var _ID3v1Reader = (function(){  //jquery
   };
 
 
-})();    //jQuery Closure
+})();//jQuery Closure
 // };          //node.js
 
 
@@ -1193,7 +1193,7 @@ var _ID3v1Reader = (function(){  //jquery
 //---------------------------------------------------
 // id3処理に関する共有処理をまとめたクロージャー
 //---------------------------------------------------
-var _Mp3UtilFunc = (function(){  //jquery closure
+var _Mp3UtilFunc = (function(){//jquery closure
 // var _Mp3UtilFunc = new function (){
 
   var fs        = require('fs');
@@ -1380,7 +1380,7 @@ var _Mp3UtilFunc = (function(){  //jquery closure
 
   };
 
-})();    //jQuery Closure
+})();//jQuery Closure
 // };          //node.js
 
 
@@ -1393,7 +1393,7 @@ var _Mp3UtilFunc = (function(){  //jquery closure
 //---------------------------------------------------
 // ファイル読み込み処理をまとめたクロージャー
 //---------------------------------------------------
-var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
+var _Mp3UtilFileOpenFunc = (function(){//jquery closure
 // var _Mp3UtilFileOpenFunc = new function (){
 
   //ファイルを開く
@@ -1484,7 +1484,7 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
     }
   };
 
-})();    //jQuery Closure
+})();//jQuery Closure
 // };          //node.js
 
 
@@ -1503,7 +1503,7 @@ var _Mp3UtilFileOpenFunc = (function(){  //jquery closure
 //---------------------------------------------------
 // ReplayGainの読み込み処理をまとめたクロージャー
 //---------------------------------------------------
-var _Mp3ReplayGainFunc = (function(){  //jquery closure
+var _Mp3ReplayGainFunc = (function(){//jquery closure
 // var _Mp3ReplayGainFunc = new function (){
 
   var backupID3;            //id3をバックアップ
@@ -1637,7 +1637,7 @@ var _Mp3ReplayGainFunc = (function(){  //jquery closure
     }
   };
 
-})();    //jQuery Closure
+})();//jQuery Closure
 // };          //node.js
 
 
