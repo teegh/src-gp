@@ -19,7 +19,7 @@
 //  year: "2015/05/27",
 //  genre: "J-POP男"
 // }
-var _TagParser = (function(){  //jquery closure
+var _TagParser = (function(){//jquery closure
 // var _ID3Reader = new function(){  //node app
 
   function parseID3Tag_cmd(inTagArr, isLyricData_enabled, isJacketData_enabled){
@@ -113,5 +113,5 @@ var _TagParser = (function(){  //jquery closure
   };
 
 
-})();    //jQuery Closure
+})();//jQuery Closure
 // };          //node.js
