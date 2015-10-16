@@ -16,7 +16,6 @@ var _RepCharCode = (function(){//jquery closure
             return getEncode_call( inStr );
         }
         // ,
-        
         // //対象の文字列をutf-8に変換する。
         // decodeUTF8 : function (inStr){
         //   buff = null;
