@@ -26,6 +26,7 @@ var _WriteFile = (function(){//jquery closure
                     if (err) return cb(err);
                     fs.close(fd, function() {
                         // console.log('_WriteFile file closed!');
+                        
                         cb(null);
                     });
                 });
