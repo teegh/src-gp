@@ -5,7 +5,7 @@
 // (0) _ProcessTimeINST.startTimerINSTL();
 // (1) console.log( "処理時間: " +_ProcessTimeINST.getTimerINSTL()[1] +" "); //0-1間の処理時間
 // (2) console.log( "処理時間: " +_ProcessTimeINST.getTimerINSTL()[1] +" "); //1-2間の処理時間
-var _ProcessTimeINST = (function() {
+var _ProcessTimeINST = (function(){//jquery closure
 
     var nowDate;
     var startTime;
@@ -60,4 +60,4 @@ var _ProcessTimeINST = (function() {
             return [ defTime, computeDuration(defTime) ];
         }
     };
-})();
+})();//jQuery Closure
