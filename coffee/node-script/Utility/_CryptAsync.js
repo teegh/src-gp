@@ -1,6 +1,7 @@
 //ファイルの復号化と暗号化 (promise対応だが、部分的に同期処理となっている)
-//cipher.updateを非同期に処理できるのであれば作り変える。
-// _WriteFile.jsを使う
+//cipher.updateを非同期に処理できるのであれば作り変える必要あり。
+// File/_WriteFile.jsを使う
+
 var _CryptAsync = (function(){//jquery closure
 
     ////http://lollyrock.com/articles/nodejs-encryption/
@@ -17,7 +18,6 @@ var _CryptAsync = (function(){//jquery closure
 
     //入力されたバッファーを暗号化
     function encrypt(buffer){
-        _ProcessTimeINST.startTimerINSTL();
         var cipher = crypto.createCipher(algorithm,password);
         //cipher.updateが同期処理となり、他の処理を止めてしまう
         var crypted = Buffer.concat([cipher.update(buffer),cipher.final()]);
@@ -33,10 +33,10 @@ var _CryptAsync = (function(){//jquery closure
 
     //入力されたバッファをもとにファイルを書き出す
     function fileSaveContents( filename , inBuff , inCallBackFunc){
-        var fd = fs.openSync(filename, "w");
-        fs.writeSync(fd, inBuff, 0, inBuff.length, 0);
-        fs.closeSync(fd);
-        inCallBackFunc();
+        // var fd = fs.openSync(filename, "w");
+        // fs.writeSync(fd, inBuff, 0, inBuff.length, 0);
+        // fs.closeSync(fd);
+        _WriteFile.writeFromBuffer( filename , inBuff , inCallBackFunc);
     };
 
     //入力されたファイルを暗号化
@@ -73,19 +73,27 @@ var _CryptAsync = (function(){//jquery closure
             return Promise.all([
                 new Promise(function(fulfilled, rejected){
                     setTimeout(function() {
-                        encryptFromFilePath(inFilePath,inDestFile,function(){
-                            fulfilled();
+                        encryptFromFilePath(inFilePath,inDestFile,function(err){
+                            if(!err){
+                                inCallBackFunc(err);
+                                fulfilled();
+                            }else{
+                                inCallBackFunc(err);
+                                rejected();
+                            }
+                            
                         });
                     }, 100);
                 })
             ]);
-        }).then(function(){
-            return new Promise(function(fulfilled, rejected){
-                // console.log("_CryptAsync encrypto callback!!");
-                inCallBackFunc();
-                fulfilled();
-            });
         });
+        // .then(function(){
+        //     return new Promise(function(fulfilled, rejected){
+        //         // console.log("_CryptAsync encrypto callback!!");
+        //         inCallBackFunc();
+        //         fulfilled();
+        //     });
+        // });
     }
     
     //入力されたファイルを復号化
@@ -95,19 +103,26 @@ var _CryptAsync = (function(){//jquery closure
             return Promise.all([
                 new Promise(function(fulfilled, rejected){
                     setTimeout(function() {
-                        decryptFromFilePath(inFilePath,inDestFile,function(){
-                            fulfilled();
+                        decryptFromFilePath(inFilePath,inDestFile,function(err){
+                            if(!err){
+                                inCallBackFunc(err);
+                                fulfilled();
+                            }else{
+                                inCallBackFunc(err);
+                                rejected();
+                            }
                         });
                     }, 100);
                 })
             ]);
-        }).then(function(){
-            return new Promise(function(fulfilled, rejected){
-                // console.log("_CryptAsync encrypto callback!!");
-                inCallBackFunc();
-                fulfilled();
-            });
         });
+        // .then(function(){
+        //     return new Promise(function(fulfilled, rejected){
+        //         // console.log("_CryptAsync encrypto callback!!");
+        //         inCallBackFunc();
+        //         fulfilled();
+        //     });
+        // });
     }
     
     //入力されたファイルを復号化し、コールバックにバッファを返す
@@ -134,11 +149,11 @@ var _CryptAsync = (function(){//jquery closure
             algorithm = inAlgorithm;
             password = inPassword;
         },
-        //入力されたファイルを暗号化
+        //入力されたファイルを暗号化 コールバックはerrを返す。err != nullならエラー
         encryptFile : function(inFilePath, inDestFile , inCallBackFunc){
             encryptFile(inFilePath, inDestFile , inCallBackFunc);
         },
-        //入力されたファイルを復号化
+        //入力されたファイルを復号化 コールバックはerrを返す。err != nullならエラー
         decryptFile : function(inFilePath, inDestFile , inCallBackFunc){
             decryptFile(inFilePath, inDestFile , inCallBackFunc);
         },

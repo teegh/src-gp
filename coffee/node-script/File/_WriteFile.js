@@ -20,7 +20,7 @@ var _WriteFile = (function(){//jquery closure
         writeFromBuffer : function (path, inBuff, cb) {
           mkdirp(getDirName(path), function (err) {
             if (err) return cb(err);
-            fs.open(filename, "w", function(err,fd){
+            fs.open(path, "w", function(err,fd){
                 if (err) return cb(err);
                 fs.write(fd, inBuff, 0, inBuff.length, 0, function(err){
                     if (err) return cb(err);
