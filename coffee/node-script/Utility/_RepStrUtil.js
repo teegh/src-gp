@@ -1,12 +1,32 @@
 //---------------------------
-// 文字列置換 各種
+// 文字列に関する処理 各種
 //---------------------------
 
-var _RepStrUtil = (function() {
+var _RepStrUtil = (function(){//jquery closure
+
+
+    //文字数を取得 (半角1, 全角2としてカウント)
+    function getCharCount(str){
+      len = 0;
+      str = escape(str);
+      for (i=0;i<str.length;i++,len++) {
+        if (str.charAt(i) == "%") {
+          if (str.charAt(++i) == "u") {
+            i += 3;
+            len++;
+          }
+          i++;
+        }
+      }
+      return len;
+    }
+
 
     return {
 
+        //----------------------
         //エスケープ処理
+        //----------------------
 
         //htmlの属性に入れる文字に対するエスケープ
         Rep_htmlAttribute: function (inStr){
@@ -32,7 +52,9 @@ var _RepStrUtil = (function() {
             return inStr.replace(/\\/g,"\\\\").replace(/\^/g,"\\^").replace(/\$/g,"\\$").replace(/\*/g,"\\*").replace(/\?/g,"\\?").replace(/\)/g,"\\)").replace(/\(/g,"\\(").replace(/\./g,"\\.").replace(/\(\?\:/g,"\\(\\?\\:").replace(/\(\?\=/g,"\\(\\?\\=").replace(/\(\?\!/g,"\\(\\?\\!").replace(/\|/g,"\\|").replace(/\{/g,"\\{").replace(/\}/g,"\\}").replace(/\[/g,"\\[").replace(/\]/g,"\\]");
         },
 
+        //------------------------
         //置換処理
+        //------------------------
 
         //値段をコンマ区切りで返す。
         Rep_AddPriceComma: function (inStr){
@@ -47,6 +69,23 @@ var _RepStrUtil = (function() {
                 zeroString += "0";
             }
             return (zeroString + String(inNum)).slice(-1*inDigitsNum);
+        },
+        
+        //指定された半角文字数の半角空白で、文字の後半を埋めた文字列を返す
+        Rep_SpacePaddingString : function(inStr, inPaddingLength){
+          var str = String(inStr);
+          var strL = getCharCount(str);
+          var paddSpace = "";
+          
+          var addN = inPaddingLength - strL;
+          if(addN < 0)addN = 0;
+          
+          for(var i=0; i<addN; i++){
+            paddSpace+= " ";
+          }
+          
+          return str + paddSpace;
+          
         },
 
         //16進数のカラーコード(#000000)をrgb(##, ##, ##)の形式に変換する。
@@ -87,10 +126,23 @@ var _RepStrUtil = (function() {
             }else{
                 return null;
             }
+        },
+        
+        
+        
+        //------------------------
+        //文字の情報を取得
+        //------------------------
+        
+        getCharCount : function (inStr){
+          return getCharCount(inStr);
         }
+        
+  
 
 
     };
+    
 
     //---------------------------
     // エスケープしてデータベースに入力、検索
@@ -100,4 +152,4 @@ var _RepStrUtil = (function() {
     // (例)tr.executeSql("INSERT INTO fileList VALUES ( ?, ? )", [ "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~｡｢｣､･"　, fileInfo[1] ]
     // ただし、selectでは'が含まれるとエラーとなる。
 
-})();
+})();//jQuery Closure
