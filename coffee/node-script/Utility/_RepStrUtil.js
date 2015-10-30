@@ -7,6 +7,7 @@ var _RepStrUtil = (function(){//jquery closure
 
     //文字数を取得 (半角1, 全角2としてカウント)
     function getCharCount(str){
+      if(!str)return 0;
       len = 0;
       str = escape(str);
       for (i=0;i<str.length;i++,len++) {
@@ -21,7 +22,6 @@ var _RepStrUtil = (function(){//jquery closure
       return len;
     }
 
-
     return {
 
         //----------------------
@@ -30,25 +30,31 @@ var _RepStrUtil = (function(){//jquery closure
 
         //htmlの属性に入れる文字に対するエスケープ
         Rep_htmlAttribute: function (inStr){
+            if(!inStr)return "";
             return inStr.replace(/"/g,'&quot;');
         },
         //htmlのテキストに入れる文字に対するエスケープ
         Rep_htmlText: function (inStr){
+            if(!inStr)return "";
             return inStr.replace(/</g,"&lt;").replace(/>/g,"&gt;");
         },
         //webSQL.jsにクエリを送る際のエスケープ
         Rep_webSQLjs: function (inStr){
+            if(!inStr)return "";
             return inStr.replace(/'/g,"＜REP:’＞").replace(/%/g,"＜REP:％＞");
         },
         deRep_webSQLjs: function (inStr){
+            if(!inStr)return "";
             return inStr.replace(/＜REP:’＞/g,"'").replace(/＜REP:％＞/g,"%");
         },
         //ファイルパスに関するエスケープ
         Rep_filePath: function (inStr){
+            if(!inStr)return "";
             return inStr.replace(/\\/g,"\\");
         },
         //正規表現new RegExpを作る際のエスケープ
         Rep_newRegExp: function (inStr){
+            if(!inStr)return "";
             return inStr.replace(/\\/g,"\\\\").replace(/\^/g,"\\^").replace(/\$/g,"\\$").replace(/\*/g,"\\*").replace(/\?/g,"\\?").replace(/\)/g,"\\)").replace(/\(/g,"\\(").replace(/\./g,"\\.").replace(/\(\?\:/g,"\\(\\?\\:").replace(/\(\?\=/g,"\\(\\?\\=").replace(/\(\?\!/g,"\\(\\?\\!").replace(/\|/g,"\\|").replace(/\{/g,"\\{").replace(/\}/g,"\\}").replace(/\[/g,"\\[").replace(/\]/g,"\\]");
         },
 
@@ -58,22 +64,27 @@ var _RepStrUtil = (function(){//jquery closure
 
         //値段をコンマ区切りで返す。
         Rep_AddPriceComma: function (inStr){
+            if(!inStr)return "";
             return String(inStr).replace( /(\d)(?=(\d\d\d)+(?!\d))/g, '$1,' );
 
         },
 
         //(ゼロパディング)入力される数値を桁数に応じて、0を埋めた文字列として返す。
         Rep_numZeroPadding: function (inNum, inDigitsNum){
+            var num = inNum;
+            if(!num)num=0;
             var zeroString = "";
             for(var i=0; i<inDigitsNum; i++){
                 zeroString += "0";
             }
-            return (zeroString + String(inNum)).slice(-1*inDigitsNum);
+            return (zeroString + String(num)).slice(-1*inDigitsNum);
         },
         
         //指定された半角文字数の半角空白で、文字の後半を埋めた文字列を返す
         Rep_SpacePaddingString : function(inStr, inPaddingLength){
-          var str = String(inStr);
+          var str = inStr;
+          if(!str)str = "";
+          str = String(str);
           var strL = getCharCount(str);
           var paddSpace = "";
           
@@ -135,6 +146,7 @@ var _RepStrUtil = (function(){//jquery closure
         //------------------------
         
         getCharCount : function (inStr){
+          if(!inStr)return 0;
           return getCharCount(inStr);
         }
         
