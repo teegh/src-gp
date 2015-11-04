@@ -101,7 +101,9 @@ var _ID3v2_3Writer = (function(){//jquery closure
 
         //タグの内容
         //入力される文字セットの判定後、asciiかUTF-16LEで入力
-        detectResult = jschardet.detect(inWriteDataObj[i].dat); //タグの文字セットを取得
+        detectResult = jschardet.detect(inWriteDataObj[i].dat.replace("×","x"));  //全角×(かける)がdetectできない不具合があるので一旦半角xに置換する
+        // console.log(tagName+ " - " +detectResult.encoding);
+        if(inWriteDataObj[i].dat.indexOf("×") != -1)detectResult.encoding = "windows-1250";  //全角×(かける)が含まれるものはwindows-1250とする
 
 
         if(detectResult.encoding == "ascii"){
